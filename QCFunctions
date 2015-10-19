@@ -25,7 +25,7 @@ def inside(i,j, c, r):
             return 1
         else: return 0
         
-def genMatrix(i,j):
+def genMatrix(i,j,a,b):
     M = []
     for marker in range(0,len(i)):
         R=[None]*len(i)
@@ -33,35 +33,35 @@ def genMatrix(i,j):
             
             if marker == 0:
                 if k == marker:
-                    R[k] = 2
+                    R[k] = 2*((a**2)+(b**2))
                 elif (i[k] == i[marker]+1 and j[k] == j[marker]):
-                    R[k] = -1
+                    R[k] = -b**2
                 elif (i[k] == i[marker] and j[k] == j[marker]+1):
-                    R[k] = -1
+                    R[k] = -a**2
                 else:
                     R[k] = 0
                     
             elif marker == (len(i)-1):
                 if k == marker:
-                    R[k] = 2
+                    R[k] = 2*((a**2)+(b**2))
                 elif (i[k] == i[marker]-1 and j[k] == j[marker]):
-                    R[k] = -1        
+                    R[k] = -b**2        
                 elif (i[k] == i[marker] and j[k] == j[marker]-1):
-                    R[k] = -1
+                    R[k] = -a**2
                 else:
                     R[k] = 0
                     
             else:
                 if k == marker:
-                    R[k] = 2
+                    R[k] = 2*((a**2)+(b**2))
                 elif (i[k] == i[marker]+1 and j[k] == j[marker]):
-                    R[k] = -1
+                    R[k] = -b**2
                 elif (i[k] == i[marker]-1 and j[k] == j[marker]):
-                    R[k] = -1
+                    R[k] = -b**2
                 elif (i[k] == i[marker] and j[k] == j[marker]+1):
-                    R[k] = -1
+                    R[k] = -a**2
                 elif (i[k] == i[marker] and j[k] == j[marker]-1):
-                    R[k] = -1
+                    R[k] = -a**2
                 else:
                     R[k] = 0
         M.append(R)
@@ -142,25 +142,11 @@ def arrayFromZ(v, c, r, C):
         Colsum = Colsum+C[i]
     #print(z)
     z = np.array(z)
-    print(z)
     zero = np.zeros(((r+2), (c+2)))
-    print(1.5*(max(C)+2)-0.5*C[0])
-    print(1.5*(max(C)+2)-0.5*C[0] +C[0])
-    
-    np.put(zero,[8,9],z[0] )
-    np.put(zero,[13,14,15,16], z[1])
-    np.put(zero,[20,21], z[2])
-    print(zero)
-    
-#    # Reshape the eigenvector
-#    z = v.reshape((r,c))
-#    # Add in boundary conditions
-#    z = np.insert(z,0,0, axis=1)
-#    z = np.insert(z,c+1,0, axis=1)
-#    z = np.insert(z, 0,0,axis=0)
-#    zero = np.zeros((1,c+2))
-#    z = np.append(z,zero, axis=0 )
-#    z = z*z
+    for i in range(0,r):
+        for j in range(0,C[i]): 
+            np.put(zero[i+1], [(c+2-C[i])/2+j], z[i][j])
+    z = zero*zero
     return z
 
 def plot2Dpsi(X,Y,z,ansatz):
@@ -180,7 +166,7 @@ def plot2Dpsi(X,Y,z,ansatz):
 def plotEnergies(nt, E, Et):
     fig2 = plt.figure(figsize=(15,10))
     plt.plot(nt, E, label='Numeric')
-    plt.plot(nt,Et, label='Analytic')
+    #plt.plot(nt,Et, label='Analytic')
     plt.title('Energy vs n', fontsize=30)
     plt.xlabel('$n$',fontsize=20)
     plt.ylabel('$Energy$',fontsize=20)
