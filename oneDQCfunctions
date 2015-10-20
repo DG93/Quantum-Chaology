@@ -7,6 +7,13 @@ Created on Tue Oct 20 11:52:15 2015
 import numpy as np
 import scipy.integrate
 import matplotlib.pyplot as plt
+from numpy import linalg
+
+def OE(state):
+    if state%2 == 0:
+        return 1
+    else:
+        return -1
 
 def delta(x,a):
     if x==a:
@@ -43,11 +50,23 @@ def probError(c, sigma_psi):
     for i in range(0,len(c)):
         sigma_p.append(2*c[i]*sigma_psi)
     return sigma_p
+    
+def discEnError(n,sigma_psi,v,w):
+    h = np.zeros((n,n))
+    i,j = np.indices(h.shape)
+    h[i,j] = sigma_psi
+    delta_l = np.dot(np.dot(linalg.inv(v),h),v)
+    #print(delta_l)
+    i,j = np.indices(delta_l.shape)
+    sigma_l = delta_l[i==j]
+    #print(sigma_l)
+    sigma_l = [x for (y,x) in sorted(zip(w,sigma_l))]
+    return sigma_l
 
 def plotProb(l,n,C,state,sigma_p,ansatz, energy, ans_energy, a):
     xt = np.linspace(0,l,n+2)
     fig = plt.figure(figsize=(15,10))
-    plt.errorbar(xt, C, label='Energy state = %s' % str(state+1), fmt='.', yerr=sigma_p, markevery=25)
+    plt.errorbar(xt, C, label='Energy state = %s' % str(state+1), yerr=sigma_p, markevery=25, fmt='.')
     plt.plot(xt,ansatz,label="Ansatz")
     plt.title('1D square well', fontsize=30)
     plt.xlabel('$x_i$',fontsize=20)
