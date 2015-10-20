@@ -8,24 +8,18 @@ from math import sqrt,sin,pi
 import matplotlib.pyplot as plt
 import scipy.constants as sc
 import scipy.integrate
+import oneDQCfunctions as qcf
 
         
-n = 500#int(input("Enter number of steps: "))
+n = 5#int(input("Enter number of steps: "))
 l = 1#float(input("Enter width of well: "))
 state_t = 1#int(input("Enter energy state (GS=1): "))
 
-#n = 10*state_t
 a = l/n
 
-H = np.zeros((n,n))
-i,j = np.indices(H.shape)
-H[i==j] = 2.
-H[i==j-1] = -1.
-H[i==j+1] = -1.
-
+H = qcf.genMatrix(n)
 #print(H)
 
-#print linalg.eig(a)
 w, v = linalg.eig(H)
 
 #myList = [1, 2, 3, 100, 5]
@@ -35,87 +29,31 @@ state = state_t-1
 # return index of relevant energy level
 state_ind = sorted(enumerate(w), key=lambda x: x[1])[state][0]
 
+# Wavefunction
+c = qcf.genWvf(v,n,state_ind)
 
-c=[0]
-for y in range(0,n):
-    c.append(v[y,state_ind])
-c.append(0)
-#print(max(np.absolute(c)))
-
-# Probability
-C = []
-for i in range(0,len(c)):
-    C.append(c[i]*c[i])
+# Normalised Probability
+C = qcf.genProb(c, l, n)
     
 # Discrete Prob. Error
 sigma_psi = a**2
-#print('Discrete Error on wavefunction = %s' % sigma_psi)
-sigma_p = []
-for i in range(0,len(c)):
-    sigma_p.append(2*c[i]*sigma_psi)
-#print('Discrete Error on probability = %s' % sigma_p)
+sigma_p = qcf.probError(c, sigma_psi)
 
-# Integrate
+
+# Ansatz probability wavefunction
 xt = np.linspace(0,l,n+2)
-I = scipy.integrate.simps(C, x=xt)
-print(I)
-C = C/I
-
-# Plot
-fig = plt.figure(figsize=(15,10))
-plt.errorbar(xt, C, label='Energy state = %s' % str(state+1), fmt='.', yerr=sigma_p, markevery=25)
-
 ansatz = (sqrt((2/l))*np.sin(((state+1)*np.pi*xt)/l))**2
-
-plt.plot(xt,ansatz,label="Ansatz")
-plt.title('1D square well', fontsize=30)
-plt.xlabel('$x_i$',fontsize=20)
-plt.ylabel('$|\psi(x_i)|^2$',fontsize=20)
 
 # calculate energy from eigenvalue
 energy = (( (w[state_ind])/ (2) ))
 k = ((state+1)*np.pi)/l
 ans_energy = ( (k**2)/ (2) )*a**2
 
-textstr = 'Energy = %s \nAnsatz energy = %s \na = %s' %(str(energy),str(ans_energy),str(a))
-props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
-plt.text(0.0, 0, textstr, fontsize=14, horizontalalignment='left',
-        verticalalignment='bottom', bbox=props)    
-plt.legend()
-plt.show()
-fig.savefig('1Dsqwell_%s.png' % str(state+1))
-
-"""
-nt = np.linspace(1,n,n)
-E = sorted(w/2)
-fig2 = plt.figure(figsize=(15,10))
-plt.plot(nt, E)
-plt.title('Energy vs n', fontsize=30)
-plt.xlabel('$n$',fontsize=20)
-plt.ylabel('$Energy$',fontsize=20)
-fig2.savefig('1D_E_vs_n.png')
-"""
+# Plot
+qcf.plotProb(l,n,C,state,sigma_p,ansatz, energy, ans_energy, a)
 
 #difference plot
-diff = C-ansatz
-fig3 = plt.figure(figsize=(15,10))
-plt.plot(xt, diff)
-plt.title('Difference plot', fontsize=30)
-plt.xlabel('$x_i$',fontsize=20)
-plt.ylabel('$\psi(x_i)$',fontsize=20)
-fig3.savefig('1Ddifference_%s.png' % str(state+1))
-
-
-"""
-st = np.linspace(1,state+1,state+1)
-tot_ans_energy = ( ((((st)*np.pi)/l)**2)/ (2) )*a**2
-fig4 = plt.figure(figsize=(15,10))
-plt.plot(st,tot_ans_energy)
-plt.title('Energy ansatz plot', fontsize=30)
-plt.xlabel('$state$',fontsize=20)
-plt.ylabel('$E$',fontsize=20)
-fig4.savefig('1D_E_vs_state_%s.png' % str(state+1))
-"""
+qcf.plotDiff(l,n,C,ansatz,state)
 
 """
 # Discrete energy errors
@@ -131,37 +69,29 @@ sigma_l = [x for (y,x) in sorted(zip(w,sigma_l))]
 """
 
 # Both energies plot
+qcf.plotEvN(n,w,l,a)
+
+# Difference in energies plot
+qcf.plotEdiff(n, w,l,a)
+
+# Print energies
 nt = np.linspace(1,n,n)
 E = sorted(w/2)
 tot_ans_energy = ( ((((nt)*np.pi)/l)**2)/ (2) )*a**2
-fig2 = plt.figure(figsize=(15,10))
-plt.errorbar(nt, E, label='Discrete solution')#, yerr=sigma_l)
-plt.plot(nt, tot_ans_energy, label='Analytic solution')
-#plt.xlim(0,n/2)
-plt.title('Energy (Discrete and Analytic) vs state', fontsize=30)
-plt.xlabel('$state$',fontsize=20)
-plt.ylabel('$Energy$',fontsize=20)
-plt.legend()
-plt.show()
-fig2.savefig('1D_dE_aE_vs_state.png')
-
-
-# Difference in energies plot
 E_diff = np.absolute(E - tot_ans_energy)
-fig4  = plt.figure(figsize=(15,10))
-#plt.plot(nt, sigma_l, label='Discrete Energy Error')
-plt.plot(nt, E_diff, label='Energy difference')
-#plt.xlim(0,n/10)
-#plt.ylim(-0.005,0.005)
-plt.title('Energy Difference vs state', fontsize=30)
-plt.xlabel('$State$',fontsize=20)
-plt.ylabel('$Energy$',fontsize=20)
-plt.legend()
-plt.show()
-fig4.savefig('1D_E_diff_vs_state.png')
-
-
 print('Energy state = %s' % str(state+1))
 print('Discrete energy = %s' % (energy))
 print('Energy difference = %s' % E_diff[state])
-#print(sigma_l)
+
+
+# Symmerties
+N = int((n-1)/2)
+print(N)
+#Nt = np.linspace(-N,N,n+1)
+eH = np.zeros((N+1,N+1))
+for j in range(0,N+1):
+    for i in range(0,N+1):
+        eH[i,j] = (H[i,j]+H[-i,j]+H[i,-j]+H[-i,-j])/(sqrt(1+qcf.delta(j,0))*sqrt(1+qcf.delta(i,0)))
+print(H)
+print(eH)
+ew, ev = linalg.eig(eH)
