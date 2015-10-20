@@ -6,14 +6,13 @@ from numpy import linalg
 import math
 from math import sqrt,sin,pi
 import matplotlib.pyplot as plt
-import scipy.constants as sc
 import scipy.integrate
 import oneDQCfunctions as qcf
 
         
-n = 5#int(input("Enter number of steps: "))
+n =71#int(input("Enter number of steps: "))
 l = 1#float(input("Enter width of well: "))
-state_t = 1#int(input("Enter energy state (GS=1): "))
+state = 44#int(input("Enter energy state (GS=1): "))
 
 a = l/n
 
@@ -23,7 +22,7 @@ H = qcf.genMatrix(n)
 w, v = linalg.eig(H)
 
 #myList = [1, 2, 3, 100, 5]
-state = state_t-1
+state = state-1
 
 # enumerate list and sort by eigenvalues
 # return index of relevant energy level
@@ -44,8 +43,10 @@ sigma_p = qcf.probError(c, sigma_psi)
 xt = np.linspace(0,l,n+2)
 ansatz = (sqrt((2/l))*np.sin(((state+1)*np.pi*xt)/l))**2
 
-# calculate energy from eigenvalue
+# Calculate energy from eigenvalue
 energy = (( (w[state_ind])/ (2) ))
+
+# Ansatz energy
 k = ((state+1)*np.pi)/l
 ans_energy = ( (k**2)/ (2) )*a**2
 
@@ -53,26 +54,18 @@ ans_energy = ( (k**2)/ (2) )*a**2
 qcf.plotProb(l,n,C,state,sigma_p,ansatz, energy, ans_energy, a)
 
 #difference plot
-qcf.plotDiff(l,n,C,ansatz,state)
+#qcf.plotDiff(l,n,C,ansatz,state)
 
-"""
+
 # Discrete energy errors
-h = np.zeros((n,n))
-i,j = np.indices(h.shape)
-h[i,j] = sigma_psi
-delta_l = np.dot(np.dot(linalg.inv(v),h),v)
-#print(delta_l)
-i,j = np.indices(delta_l.shape)
-sigma_l = delta_l[i==j]
-#print(sigma_l)
-sigma_l = [x for (y,x) in sorted(zip(w,sigma_l))]
-"""
+#sigma_l = qcf.discEnError(n,sigma_psi,v,w)
+
 
 # Both energies plot
-qcf.plotEvN(n,w,l,a)
+#qcf.plotEvN(n,w,l,a)
 
 # Difference in energies plot
-qcf.plotEdiff(n, w,l,a)
+#qcf.plotEdiff(n, w,l,a)
 
 # Print energies
 nt = np.linspace(1,n,n)
@@ -84,14 +77,44 @@ print('Discrete energy = %s' % (energy))
 print('Energy difference = %s' % E_diff[state])
 
 
-# Symmerties
-N = int((n-1)/2)
-print(N)
-#Nt = np.linspace(-N,N,n+1)
-eH = np.zeros((N+1,N+1))
-for j in range(0,N+1):
-    for i in range(0,N+1):
-        eH[i,j] = (H[i,j]+H[-i,j]+H[i,-j]+H[-i,-j])/(sqrt(1+qcf.delta(j,0))*sqrt(1+qcf.delta(i,0)))
-print(H)
-print(eH)
-ew, ev = linalg.eig(eH)
+##################### SYMMETRIES #####################
+
+oe = qcf.OE(state)
+N = int((n+1)/2)
+M=N-1
+#print(N)
+sH = np.zeros((N,N))
+for j in range(0,N):
+    for i in range(0,N):
+        sH[i,j] = (H[M+i,M+j]+oe*H[M-i,M+j]+oe*H[M+i,M-j]+H[M-i,M-j])/(sqrt(1+qcf.delta(j,0))*sqrt(1+qcf.delta(i,0)))
+#print(H)
+#print(sH)
+sw, sv = linalg.eig(sH)
+s_state = int((state+1)/2)
+s_state_ind = sorted(enumerate(sw), key=lambda x: x[1])[s_state][0]
+sE = (( (sw[s_state_ind])/ (2) ))
+
+# Wavefunction
+sc = qcf.genWvf(sv,N,s_state_ind)
+sc.pop(0)
+rev = sc[:]
+rev.reverse()
+#print(sc)
+#print(rev)
+
+ssc=[0]*(2*len(sc)-1)
+L = int(len(ssc)/2)
+for i in range(0,L+1):
+        ssc[i] = ssc[i] + rev[i]
+        ssc[i+int(len(ssc)/2)] = ssc[i+int(len(ssc)/2)] + sc[i]
+ssc[L] = ssc[L]/sqrt(2)
+#print(ssc)
+#print(c)
+# Normalised Probability
+sC = qcf.genProb(ssc, l, n)
+
+s_sigma_p = qcf.probError(ssc, sigma_psi)
+s_xt = np.linspace(0,l,n+2)
+s_ansatz = (sqrt((2/l))*np.sin(((state+1)*np.pi*s_xt)/l))**2
+qcf.plotProb(l,n,sC,state,s_sigma_p,s_ansatz, sE, ans_energy, a)
+
