@@ -1,0 +1,103 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Tue Oct 20 11:52:15 2015
+
+@author: mbcx2dg2
+"""
+import numpy as np
+import scipy.integrate
+import matplotlib.pyplot as plt
+
+def delta(x,a):
+    if x==a:
+        return 1
+    else:
+        return 0
+    
+def genMatrix(n):
+    H = np.zeros((n,n))
+    i,j = np.indices(H.shape)
+    H[i==j] = 2.
+    H[i==j-1] = -1.
+    H[i==j+1] = -1.
+    return H
+    
+def genWvf(v,n,state_ind):
+    c=[0]
+    for y in range(0,n):
+        c.append(v[y,state_ind])
+    c.append(0)
+    return c
+    
+def genProb(c, l, n):
+    C = []
+    for i in range(0,len(c)):
+        C.append(c[i]*c[i])
+    xt = np.linspace(0,l,n+2)
+    I = scipy.integrate.simps(C, x=xt)
+    C = C/I
+    return C
+        
+def probError(c, sigma_psi):
+    sigma_p = []
+    for i in range(0,len(c)):
+        sigma_p.append(2*c[i]*sigma_psi)
+    return sigma_p
+
+def plotProb(l,n,C,state,sigma_p,ansatz, energy, ans_energy, a):
+    xt = np.linspace(0,l,n+2)
+    fig = plt.figure(figsize=(15,10))
+    plt.errorbar(xt, C, label='Energy state = %s' % str(state+1), fmt='.', yerr=sigma_p, markevery=25)
+    plt.plot(xt,ansatz,label="Ansatz")
+    plt.title('1D square well', fontsize=30)
+    plt.xlabel('$x_i$',fontsize=20)
+    plt.ylabel('$|\psi(x_i)|^2$',fontsize=20)
+    textstr = 'Energy = %s \nAnsatz energy = %s \na = %s' %(str(energy),str(ans_energy),str(a))
+    props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
+    plt.text(0.0, 0, textstr, fontsize=14, horizontalalignment='left',
+            verticalalignment='bottom', bbox=props)    
+    plt.legend()
+    plt.show()
+    fig.savefig('1Dsqwell_%s.png' % str(state+1))
+    
+def plotDiff(l,n,C,ansatz,state):
+    xt = np.linspace(0,l,n+2)
+    diff = C-ansatz
+    fig2 = plt.figure(figsize=(15,10))
+    plt.plot(xt, diff)
+    plt.title('Difference plot', fontsize=30)
+    plt.xlabel('$x_i$',fontsize=20)
+    plt.ylabel('$\psi(x_i)$',fontsize=20)
+    fig2.savefig('1Ddifference_%s.png' % str(state+1))
+    
+def plotEvN(n,w,l,a):
+    nt = np.linspace(1,n,n)
+    E = sorted(w/2)
+    tot_ans_energy = ( ((((nt)*np.pi)/l)**2)/ (2) )*a**2
+    fig3 = plt.figure(figsize=(15,10))
+    plt.errorbar(nt, E, label='Discrete solution')#, yerr=sigma_l)
+    plt.plot(nt, tot_ans_energy, label='Analytic solution')
+    #plt.xlim(0,n/2)
+    plt.title('Energy (Discrete and Analytic) vs state', fontsize=30)
+    plt.xlabel('$state$',fontsize=20)
+    plt.ylabel('$Energy$',fontsize=20)
+    plt.legend()
+    plt.show()
+    fig3.savefig('1D_dE_aE_vs_state.png')
+    
+def plotEdiff(n, w,l,a):
+    nt = np.linspace(1,n,n)
+    E = sorted(w/2)
+    tot_ans_energy = ( ((((nt)*np.pi)/l)**2)/ (2) )*a**2
+    E_diff = np.absolute(E - tot_ans_energy)
+    fig4  = plt.figure(figsize=(15,10))
+    #plt.plot(nt, sigma_l, label='Discrete Energy Error')
+    plt.plot(nt, E_diff, label='Energy difference')
+    #plt.xlim(0,n/10)
+    #plt.ylim(-0.005,0.005)
+    plt.title('Energy Difference vs state', fontsize=30)
+    plt.xlabel('$State$',fontsize=20)
+    plt.ylabel('$Energy$',fontsize=20)
+    plt.legend()
+    plt.show()
+    fig4.savefig('1D_E_diff_vs_state.png')
