@@ -6,7 +6,7 @@ from math import sqrt
 import oneDQCfunctions as qcf
 
         
-n =71#int(input("Enter an (odd) number of steps: "))
+n =151#int(input("Enter an (odd) number of steps: "))
 l = 1#float(input("Enter width of well: "))
 state = 1#int(input("Enter energy state (GS=1): "))
 state = state-1
@@ -22,7 +22,7 @@ ans_energy = ( (k**2)/ (2) )*a**2
 
 
 ##################### NOT USING SYMMETRIES #####################
-"""
+
 w, v = linalg.eig(H)
 # enumerate list and sort by eigenvalues
 # return index of relevant energy level
@@ -46,15 +46,18 @@ qcf.plotEvN(n,n,w,l,a)
 # Difference in energies plot
 qcf.plotEdiff(n,n,w,l,a)
 # Print energies
-qcf.printE(n,N,w,l,a,state,energy)
-"""
+#qcf.printE(n,N,w,l,a,state,energy)
+
 
 ##################### USING SYMMETRIES #####################
 
 oe = qcf.OE(state)
 N = int((n+1)/2)
 sH = qcf.redMatrix(H,N,oe)
+#print(sH)
 sw, sv = linalg.eig(sH)
+#print(v)
+#print(sv)
 s_state = int((state+1)/2)
 s_state_ind = sorted(enumerate(sw), key=lambda x: x[1])[s_state][0]
 sE = (( (sw[s_state_ind])/ (4) ))
