@@ -1,0 +1,118 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Wed Sep 30 17:35:32 2015
+
+2D infinite potential wells
+@author: Dan Goldsmith & Dan Locke
+"""
+import numpy as np
+from numpy import linalg
+import QCfunctStadQRTR as qcf
+from math import sqrt,sin,pi
+
+c =51#int(input("Enter number of points in x axis: "))
+r = c#int(input("Enter number points in y axis: "))
+a=0.01
+b=a
+x = c*a#float(input("Enter width (x axis) of well: "))
+y = r*a#float(input("Enter depth (y axis) of well: "))
+
+xmap=[]
+ymap=[]
+C=[]
+n=0
+for i in range(1,r+1):
+    col_count = 0
+    for j in range(1,c+1):
+        if qcf.inside(i,j,c,r) == 1: 
+            xmap.append(j)
+            ymap.append(i)
+            col_count = col_count +1
+    C.append(col_count)
+
+for i in range(0,(r+1)//2): 
+        n = n+(C[i]+1)/2
+       
+
+      
+qcf.plotMap(xmap,ymap)
+
+H = qcf.genMatrix(xmap,ymap,a,b)
+#print(H)
+w0, v0 = linalg.eigh(H)
+
+state = 0
+state_ind = sorted(enumerate(w0), key=lambda x: x[1])[state][0]
+
+
+oe = 1#qcf.OE(state)
+N = int(n)
+M=(len(xmap)+1)//2 -1
+print(M)
+print(N)
+a = 0
+b = 0
+
+halfC=[]
+for i in range(0,r):
+    halfC.append((C[i]+1)//2)
+
+Q = []
+for I in range(0,(r+1)//2):
+    for J in range(0,halfC[I+(r-1)//2]):        
+        print(I,J,qcf.I((r+1)//2-1+I,halfC[I+(r+1)//2-1]-1+J,C)) #i,j
+        Q.append(qcf.I((r+1)//2-1+I,halfC[I+(r+1)//2-1]-1+J,C))
+        #print(I,J,qcf.I((r+1)//2-1+I,halfC[I+(r+1)//2-1]-1-J,C)) #i,-j
+        #print(I,J,qcf.I((r+1)//2-1-I,halfC[I+(r+1)//2-1]-1+J,C)) #-i,j
+        #print(I,J,qcf.I((r+1)//2-1-I,halfC[I+(r+1)//2-1]-1-J,C)) #-i,-j
+
+sH = np.zeros((N,N))
+for j in range(0,M+1):
+    if (j+M) in Q:
+        for i in range(0,M+1):
+            if (i+M) in Q:
+                sH[a,b] = (H[M+i,M+j]+oe*H[M-i,M+j]+oe*H[M+i,M-j]+H[M-i,M-j])/(sqrt(1+qcf.delta(j,0))*sqrt(1+qcf.delta(i,0)))
+                #print(a,b)
+                a=a+1
+                
+        a=0
+        b=b+1
+            
+
+print(sH)
+
+w, v = linalg.eig(sH)
+s_state = 0#int((state+1)/2)
+s_state_ind = sorted(enumerate(w), key=lambda x: x[1])[s_state][0]
+#print(sorted(enumerate(w), key=lambda x: x[1]))
+sE = (( (w[s_state_ind])/ (4) ))
+
+
+
+# enumerate list and sort by eigenvalues, return index of relevant energy level; m labels mth energy level (in sorted list of energies)
+'''
+m=800
+state_ind = sorted(enumerate(w), key=lambda x: x[1])[m][0]#[len(s)+counter][0]
+'''
+xt = np.linspace(0,x,c+2)
+yt = np.linspace(0,y,r+2)
+X, Y = np.meshgrid(xt, yt)
+
+z0 = qcf.arrayFromZ0(v0[:,state_ind], c, r, C, xt, yt)
+
+    
+#print(v[:,s_state_ind])
+#print(v0[:,state_ind])
+z = qcf.arrayFromZ(v[:,s_state_ind], c, r, halfC, xt, yt)
+#print(z)
+
+#state_x = int(input("Enter energy state in x (GS=1): "))
+#state_y = int(input("Enter energy state in y (GS=1): "))
+m=state+1
+qcf.plot2Dpsi(X,Y,-z,m)
+     
+n = len(ymap)
+nt = np.linspace(1,n,n)
+E = sorted(w/2)
+#qcf.plotEnergies(nt, E, 0)
+qcf.plotContour(X,Y,z,m)
