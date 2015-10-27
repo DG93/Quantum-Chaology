@@ -149,8 +149,9 @@ def arrayFromZ(v, c, r, halfC, xt, yt):
         z[i] = (v[Colsum:Colsum+halfC[(r-1)//2+i]])
         #print(z[i])
         Colsum = Colsum+halfC[(r-1)//2+i]
-    #print(z)
+    
     z = np.array(z)
+    #print(z)
     zero = np.zeros(((r+2), (c+2)))
     zero2 = np.zeros(((r+2), (c+2)))
     zero3 = np.zeros(((r+2), (c+2)))
@@ -158,31 +159,28 @@ def arrayFromZ(v, c, r, halfC, xt, yt):
     
     for i in range(0,(r+1)//2):
         for j in range(0,halfC[(r-1)//2+i]): 
-            np.put(zero[(r-1)//2+(i+1)], [((c+1)//2 +j)], z[i][j])
+            np.put(zero[(r-1)//2+(i+1)], [((c+1)//2+j)], z[i][j])
             np.put(zero2[(r-1)//2-(i-1)], [((c+1)//2-j)], z[i][j])
             np.put(zero3[(r-1)//2+(i+1)], [((c+1)//2-j)], z[i][j])
-            np.put(zero4[(r-1)//2-(i-1)], [((c+1)//2 +j)], z[i][j])
-            
+            np.put(zero4[(r-1)//2-(i-1)], [((c+1)//2+j)], z[i][j])
+        
     z=zero+zero2+zero3+zero4
     
-    for i in range(0,r+2):
-        z[i,(c+1)/2] = z[i,(c+1)/2] / np.sqrt(2)
-    
-    
-    for j in range(0,c+2):                       
-            z[(r+1)/2,j] = z[(r+1)/2,j] / np.sqrt(2)  
-    
-
+#    for i in range(0,r+2):
+#        z[i,(c+1)//2] = z[i,(c+1)/2] / np.sqrt(2)
+#    for j in range(0,c+2):                       
+#        z[(r+1)//2,j] = z[(r+1)/2,j] / np.sqrt(2)  
+    np.savetxt('test.txt', z, fmt='%-3.2f')
     z = z*z
     #print(z)
     
-    Ix=[]
-    for i in range(0,r+2):
-        Ix.append(scipy.integrate.simps(z[i,:], x=xt))
-        
-    I = scipy.integrate.simps(Ix, x=yt)
-    z=z/I
+#    Ix=[]
+#    for i in range(0,r+2):
+#        Ix.append(scipy.integrate.simps(z[i,:], x=xt))   
+#    I = scipy.integrate.simps(Ix, x=yt)
+#    z=z/I
     
+
     return z
     
 def plotMap(xmap,ymap):
@@ -194,12 +192,13 @@ def plotMap(xmap,ymap):
     plt.show()
     fig.savefig('Map.png')
 
-def plot2Dpsi(X,Y,z,m):
-
+def plot2Dpsi(X,Y,z,m, ansatz):
+    
     fig = plt.figure(figsize=(10,8))
     ax = fig.add_subplot(111, projection='3d')
-    z = abs(z)
+    #z = abs(z)
     surf = ax.plot_surface(X,Y,z, cmap=cm.coolwarm, cstride=1, rstride=1)
+    #ax.plot_wireframe(X,Y,ansatz, cstride=1, rstride=1)
     fig.colorbar(surf)
     plt.xlabel('$x_i$',fontsize=20)
     plt.ylabel('$y_i$',fontsize=20)
