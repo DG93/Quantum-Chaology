@@ -9,8 +9,9 @@ import numpy as np
 from numpy import linalg
 import QCfunctStadQRTR as qcf
 from math import sqrt,sin,pi
+import scipy
 
-c =51#int(input("Enter number of points in x axis: "))
+c =5#int(input("Enter number of points in x axis: "))
 r = c#int(input("Enter number points in y axis: "))
 a=0.01
 b=a
@@ -38,7 +39,7 @@ for i in range(0,(r+1)//2):
 qcf.plotMap(xmap,ymap)
 
 H = qcf.genMatrix(xmap,ymap,a,b)
-#print(H)
+print(H)
 w0, v0 = linalg.eigh(H)
 
 state = 0
@@ -60,7 +61,7 @@ for i in range(0,r):
 Q = []
 for I in range(0,(r+1)//2):
     for J in range(0,halfC[I+(r-1)//2]):        
-        print(I,J,qcf.I((r+1)//2-1+I,halfC[I+(r+1)//2-1]-1+J,C)) #i,j
+        #print(I,J,qcf.I((r+1)//2-1+I,halfC[I+(r+1)//2-1]-1+J,C)) #i,j
         Q.append(qcf.I((r+1)//2-1+I,halfC[I+(r+1)//2-1]-1+J,C))
         #print(I,J,qcf.I((r+1)//2-1+I,halfC[I+(r+1)//2-1]-1-J,C)) #i,-j
         #print(I,J,qcf.I((r+1)//2-1-I,halfC[I+(r+1)//2-1]-1+J,C)) #-i,j
@@ -71,7 +72,7 @@ for j in range(0,M+1):
     if (j+M) in Q:
         for i in range(0,M+1):
             if (i+M) in Q:
-                sH[a,b] = (H[M+i,M+j]+oe*H[M-i,M+j]+oe*H[M+i,M-j]+H[M-i,M-j])/(sqrt(1+qcf.delta(j,0))*sqrt(1+qcf.delta(i,0)))
+                sH[a,b] = (H[M+i,M+j]+oe*H[M-i,M+j]+oe*H[M+i,M-j]+H[M-i,M-j])/(sqrt(1+qcf.delta(a,0))*sqrt(1+qcf.delta(b,0)))
                 #print(a,b)
                 a=a+1
                 
@@ -98,7 +99,7 @@ xt = np.linspace(0,x,c+2)
 yt = np.linspace(0,y,r+2)
 X, Y = np.meshgrid(xt, yt)
 
-z0 = qcf.arrayFromZ0(v0[:,state_ind], c, r, C, xt, yt)
+#z0 = qcf.arrayFromZ0(v0[:,state_ind], c, r, C, xt, yt)
 
     
 #print(v[:,s_state_ind])
@@ -108,8 +109,17 @@ z = qcf.arrayFromZ(v[:,s_state_ind], c, r, halfC, xt, yt)
 
 #state_x = int(input("Enter energy state in x (GS=1): "))
 #state_y = int(input("Enter energy state in y (GS=1): "))
+
+
+#ansatz = ( ( 2/np.sqrt(x*y) )*np.sin((state+1)*np.pi*X/x)*np.sin((state+1)*np.pi*Y/y) )**2#
+#ansatz = ansatz*ansatz
+#ansatz = ansatz/np.amax(ansatz)
+#ansatz = np.amax(z)*ansatz
+
+
+
 m=state+1
-qcf.plot2Dpsi(X,Y,-z,m)
+qcf.plot2Dpsi(X,Y,z,m, ansatz)
      
 n = len(ymap)
 nt = np.linspace(1,n,n)
