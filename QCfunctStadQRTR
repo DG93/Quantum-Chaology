@@ -235,8 +235,8 @@ def plotEnergies(nt, E, Et):
     
 def plotN(E,polyN, nt):
     fig = plt.figure(figsize=(15,10))
-    plt.plot(polyN(E), E, label='Numeric')
-    plt.plot(nt, E, label='Polynomial')
+    plt.plot(polyN(E), E, label='Polynomial')
+    plt.plot(nt, E, label='Numeric')
     plt.title('n vs energy', fontsize=30)
     plt.xlabel('$Energy$',fontsize=20)
     plt.ylabel('$n$',fontsize=20)
@@ -247,8 +247,8 @@ def plotN(E,polyN, nt):
 def plotPolyN(nt, polyN, E):
     fig = plt.figure(figsize=(15,10))
     plt.plot(nt, polyN(E))
-    plt.title('n vs polynomial n', fontsize=30)
-    plt.xlabel('$polynomial n$',fontsize=20)
+    plt.title('n vs $n_{bar}$', fontsize=30)
+    plt.xlabel('$n_{bar}$',fontsize=20)
     plt.ylabel('$n$',fontsize=20)
     plt.legend()
     plt.show()
@@ -261,16 +261,19 @@ def plotDelta(nt, PolyN, E):
         delta.append(PolyN(E[i]+1)-PolyN(E[i]))
         ntt.append(nt[i]-nt[0])
     fig = plt.figure(figsize=(15,10))
-    polyVal=[]
-    for i in range(0,len(ntt)):
-        polyVal.append(PolyN(E[i]))
-    plt.plot(delta, polyVal)
-    plt.title('Nearest neighbour distance vs n_{bar}', fontsize=30)
-    plt.ylabel('$Nearest neighbour distance$',fontsize=20)
+#    polyVal=[]
+#    for i in range(0,len(ntt)):
+#        polyVal.append(PolyN(E[i]))
+    #plt.plot(delta, polyVal)
+    plt.hist(delta, bins=50,  histtype='bar')        
+        
+        
+    plt.title('$n_{bar}$ histogram', fontsize=30)
+    plt.ylabel('Frequency',fontsize=20)
     plt.xlabel('$n_{bar}$',fontsize=20)
     plt.legend()
     plt.show()
-    fig.savefig('Billiard_n_diff.png')
+    fig.savefig('Billiard_nbar_hist.png')
     
 def plotContour(X,Y,z, m):
     fig = plt.figure(figsize=(15,10))
