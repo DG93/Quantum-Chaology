@@ -8,11 +8,10 @@ Created on Wed Sep 30 17:35:32 2015
 import numpy as np
 from numpy import linalg
 import QCfunctStadQRTR as qcf
-from math import sqrt,sin,pi
-import scipy
 
-c =5#int(input("Enter number of points in x axis: "))
-r = c#int(input("Enter number points in y axis: "))
+
+r =31#int(input("Enter number of points in x axis: "))
+c = r#int(input("Enter number points in y axis: "))
 a=0.01
 b=a
 x = c*a#float(input("Enter width (x axis) of well: "))
@@ -36,51 +35,100 @@ for i in range(0,(r+1)//2):
        
 
       
-qcf.plotMap(xmap,ymap)
+#qcf.plotMap(xmap,ymap)
 
 H = qcf.genMatrix(xmap,ymap,a,b)
-print(H)
+#print(H)
 w0, v0 = linalg.eigh(H)
 
 state = 0
 state_ind = sorted(enumerate(w0), key=lambda x: x[1])[state][0]
 
 
-oe = 1#qcf.OE(state)
+#oe = 1#qcf.OE(state)
 N = int(n)
 M=(len(xmap)+1)//2 -1
-print(M)
-print(N)
-a = 0
-b = 0
+#print(M)
+#print(N)
+#a = 0
+#b = 0
 
 halfC=[]
 for i in range(0,r):
     halfC.append((C[i]+1)//2)
 
 Q = []
+Q2=[]
+Q3=[]
+Q4=[]
 for I in range(0,(r+1)//2):
     for J in range(0,halfC[I+(r-1)//2]):        
         #print(I,J,qcf.I((r+1)//2-1+I,halfC[I+(r+1)//2-1]-1+J,C)) #i,j
         Q.append(qcf.I((r+1)//2-1+I,halfC[I+(r+1)//2-1]-1+J,C))
         #print(I,J,qcf.I((r+1)//2-1+I,halfC[I+(r+1)//2-1]-1-J,C)) #i,-j
+        Q2.append(qcf.I((r+1)//2-1+I,halfC[I+(r+1)//2-1]-1-J,C))
         #print(I,J,qcf.I((r+1)//2-1-I,halfC[I+(r+1)//2-1]-1+J,C)) #-i,j
+        Q3.append(qcf.I((r+1)//2-1-I,halfC[I+(r+1)//2-1]-1+J,C))
         #print(I,J,qcf.I((r+1)//2-1-I,halfC[I+(r+1)//2-1]-1-J,C)) #-i,-j
+        Q4.append(qcf.I((r+1)//2-1-I,halfC[I+(r+1)//2-1]-1-J,C))
 
-sH = np.zeros((N,N))
-for j in range(0,M+1):
-    if (j+M) in Q:
-        for i in range(0,M+1):
-            if (i+M) in Q:
-                sH[a,b] = (H[M+i,M+j]+oe*H[M-i,M+j]+oe*H[M+i,M-j]+H[M-i,M-j])/(sqrt(1+qcf.delta(a,0))*sqrt(1+qcf.delta(b,0)))
-                #print(a,b)
-                a=a+1
-                
-        a=0
-        b=b+1
+M=[]
+for I in range(0,r):
+        M.append(qcf.I(I,halfC[I]-1,C))
+for J in range(0,c):
+        M.append( qcf.I((r-1)//2, J, C) )
+M2=[]
+M2.append(qcf.I((r-1)//2, (c-1)//2, C) )
+
+Q_arr=[]
+Q_arr.append(Q)
+Q_arr.append(Q2)
+Q_arr.append(Q3)
+Q_arr.append(Q4)
+#print(Q_arr)
+
+    
+    
+#sH = np.zeros((N,N))
+#for j in range(0,M+1):
+#    if (j+M) in Q:
+#        for i in range(0,M+1):
+#            if (i+M) in Q:
+#                sH[a,b] = (H[M+i,M+j]+oe*H[M-i,M+j]+oe*H[M+i,M-j]+H[M-i,M-j])/(sqrt(1+qcf.delta(a,0))*sqrt(1+qcf.delta(b,0)))
+#                #print(a,b)
+#                a=a+1
+#                
+#        a=0
+#        b=b+1
+    
+# Q_arr contains indexes for [I++],[I+-],[I-+],I[--]
+
+#def DELTA(Q_arr, val):
+#    for i in range(0,4):
+#        delt = delt*(1 + qcf.delta(Q_arr[i],M) )
             
+            
+sH = np.zeros((N,N))      
+#for i in range(0,2):
+#    for j in range(0,2):        
+#        for I in Q_arr[i]:
+#            for J in Q_arr[j]:
+#                print('testq = %i,%i' %(I,J))
+#                sH[a,b] = sH(a,b)+(H(I,J)/(sqrt(1+qcf.delta(I,0))*sqrt(1+qcf.delta(J,0))))
+#a=0
+# define M to be a list of central indices
 
-print(sH)
+
+
+
+for I in range(0,N):
+    for J in range(0,N):
+        for i in range(0,4):
+            for j in range(0,4):
+                sH[I,J] = sH[I,J]+H[Q_arr[i][I],Q_arr[j][J]]/( np.sqrt((1+qcf.delta(Q_arr[i][I],M2))*(1+qcf.delta(Q_arr[j][J],M2))*(1+qcf.delta(Q_arr[i][I],M))*(1+qcf.delta(Q_arr[j][J],M))) )
+                #print(i , j, qcf.OE2(i,j) )
+#print('HERE')
+#print(sH)
 
 w, v = linalg.eig(sH)
 s_state = 0#int((state+1)/2)
@@ -119,10 +167,27 @@ z = qcf.arrayFromZ(v[:,s_state_ind], c, r, halfC, xt, yt)
 
 
 m=state+1
-qcf.plot2Dpsi(X,Y,z,m, ansatz)
-     
-n = len(ymap)
+#qcf.plot2Dpsi(X,Y,z,s_state,0)
+#qcf.plotContour(X,Y,z,s_state)     
+n = len(w)
 nt = np.linspace(1,n,n)
-E = sorted(w/2)
-#qcf.plotEnergies(nt, E, 0)
-qcf.plotContour(X,Y,z,m)
+E = sorted(w/4)
+
+polyN = np.poly1d(np.polyfit(E, nt, 10))
+qcf.plotN(E, polyN,nt)
+
+#Limit plot to linear + interesting region
+top = int(3*n/8)
+bottom = int(n/5)
+diff = top-bottom+1
+print(n)
+print(top)
+print(bottom)
+print(diff)
+nt = np.linspace(bottom,top,diff)
+redE = E[bottom:(top+1)]
+redPolyN = np.poly1d(np.polyfit(redE, nt, 10))
+qcf.plotN(redE, redPolyN,nt)
+qcf.plotPolyN(nt, redPolyN, redE)
+qcf.plotDelta(nt,redPolyN, redE)
+
