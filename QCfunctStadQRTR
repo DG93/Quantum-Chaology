@@ -8,7 +8,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import cm
 import scipy.integrate
-from mpl_toolkits.mplot3d import Axes3D
 
 def OE(state):
     if state%2 == 0:
@@ -16,8 +15,28 @@ def OE(state):
     else:
         return -1
 
+def OE2(i, j):
+    # i labels I++,I+-,I-+,I-- -> [0,1,2,3]    
+    A=[0,2]
+    B=[1,2]
+    # 0,3 1,2 odd odd
+    # 1,3 0,2 even odd
+    # 2,3 0,1 odd even
+    I = 1
+    J = 1
+    if i in B: 
+        I=-1
+    if j in B: 
+        J=-1
+    # if i in B: 
+    #     I=-1
+    #     if j in A: J=-1
+    return (I*J)
+
 def delta(x,a):
-    if x==a:
+    if x in a:
+        # a becomes a list of central indices, check if x contained in a
+        #print(x)
         return 1
     else:
         return 0
@@ -117,29 +136,29 @@ def findStateNumber( state_x, state_y):
     print('DEGENERACY COUNT: %i' %deg_count)
 '''    
     
-def arrayFromZ0(v, c, r, C, xt, yt):
-    Colsum = 0
-    z=[None]*r
-    #print(v)
-    for i in range(0,r):
-        z[i] = (v[Colsum:Colsum+C[i]])
-        Colsum = Colsum+C[i]
-    #print(z)
-    z = np.array(z)
-    zero = np.zeros(((r+2), (c+2)))
-    for i in range(0,r):
-        for j in range(0,C[i]): 
-            np.put(zero[i+1], [(c+2-C[i])/2+j], z[i][j])
-    z = zero#*zero
-    '''
-    Ix=[]
-    for i in range(0,r+2):
-        Ix.append(scipy.integrate.simps(z[i,:], x=xt))
+# def arrayFromZ0(v, c, r, C, xt, yt):
+#     Colsum = 0
+#     z=[None]*r
+#     #print(v)
+#     for i in range(0,r):
+#         z[i] = (v[Colsum:Colsum+C[i]])
+#         Colsum = Colsum+C[i]
+#     #print(z)
+#     z = np.array(z)
+#     zero = np.zeros(((r+2), (c+2)))
+#     for i in range(0,r):
+#         for j in range(0,C[i]): 
+#             np.put(zero[i+1], [(c+2-C[i])/2+j], z[i][j])
+#     z = zero#*zero
+#     '''
+#     Ix=[]
+#     for i in range(0,r+2):
+#         Ix.append(scipy.integrate.simps(z[i,:], x=xt))
         
-    I = scipy.integrate.simps(Ix, x=yt)
-    z=z/I
-    '''
-    return z
+#     I = scipy.integrate.simps(Ix, x=yt)
+#     z=z/I
+#     '''
+#     return z
     
 def arrayFromZ(v, c, r, halfC, xt, yt):
     Colsum = 0
@@ -166,21 +185,18 @@ def arrayFromZ(v, c, r, halfC, xt, yt):
         
     z=zero+zero2+zero3+zero4
     
-#    for i in range(0,r+2):
-#        z[i,(c+1)//2] = z[i,(c+1)/2] / np.sqrt(2)
-#    for j in range(0,c+2):                       
-#        z[(r+1)//2,j] = z[(r+1)/2,j] / np.sqrt(2)  
-    np.savetxt('test.txt', z, fmt='%-3.2f')
+    for i in range(0,r+2):
+        z[i,(c+2)//2] = z[i,(c+2)//2]/np.sqrt(2)
+    for j in range(0,c+2):                       
+        z[(r+2)//2,j] = z[(r+2)//2,j]/np.sqrt(2)
+   # np.savetxt('test.txt', z, fmt='%-3.4f')
     z = z*z
-    #print(z)
     
-#    Ix=[]
-#    for i in range(0,r+2):
-#        Ix.append(scipy.integrate.simps(z[i,:], x=xt))   
-#    I = scipy.integrate.simps(Ix, x=yt)
-#    z=z/I
-    
-
+    Ix=[]
+    for i in range(0,r+2):
+        Ix.append(scipy.integrate.simps(z[i,:], x=xt))   
+    I = scipy.integrate.simps(Ix, x=yt)
+    z=z/I
     return z
     
 def plotMap(xmap,ymap):
@@ -192,8 +208,7 @@ def plotMap(xmap,ymap):
     plt.show()
     fig.savefig('Map.png')
 
-def plot2Dpsi(X,Y,z,m, ansatz):
-    
+def plot2Dpsi(X,Y,z,m, ansatz): 
     fig = plt.figure(figsize=(10,8))
     ax = fig.add_subplot(111, projection='3d')
     #z = abs(z)
@@ -205,19 +220,57 @@ def plot2Dpsi(X,Y,z,m, ansatz):
     ax.set_zlabel('$|\psi|^2$',fontsize=20)
     plt.legend()
     plt.show()
-    fig.savefig('2Dwell_%i.png' %m)
+    fig.savefig('Billiard_%i.png' %m)
     
 def plotEnergies(nt, E, Et):
     fig = plt.figure(figsize=(15,10))
     plt.plot(nt, E, label='Numeric')
-    #plt.plot(nt,Et, label='Analytic')
+    plt.plot(nt, Et(nt), label='Polynomial')
     plt.title('Energy vs n', fontsize=30)
-    plt.xlabel('$n$',fontsize=20)
     plt.ylabel('$Energy$',fontsize=20)
+    plt.xlabel('$n$',fontsize=20)
     plt.legend()
     plt.show()
-    fig.savefig('2D_E_vs_n.png')
+    fig.savefig('Billiard_E_vs_n.png')
     
+def plotN(E,polyN, nt):
+    fig = plt.figure(figsize=(15,10))
+    plt.plot(polyN(E), E, label='Numeric')
+    plt.plot(nt, E, label='Polynomial')
+    plt.title('n vs energy', fontsize=30)
+    plt.xlabel('$Energy$',fontsize=20)
+    plt.ylabel('$n$',fontsize=20)
+    plt.legend()
+    plt.show()
+    fig.savefig('Billiard_n_vs_E.png')
+    
+def plotPolyN(nt, polyN, E):
+    fig = plt.figure(figsize=(15,10))
+    plt.plot(nt, polyN(E))
+    plt.title('n vs polynomial n', fontsize=30)
+    plt.xlabel('$polynomial n$',fontsize=20)
+    plt.ylabel('$n$',fontsize=20)
+    plt.legend()
+    plt.show()
+    fig.savefig('Billiard_n_vs_polyn.png')
+    
+def plotDelta(nt, PolyN, E):
+    delta=[]
+    ntt = []
+    for i in range(0,len(nt)-1):
+        delta.append(PolyN(E[i]+1)-PolyN(E[i]))
+        ntt.append(nt[i]-nt[0])
+    fig = plt.figure(figsize=(15,10))
+    polyVal=[]
+    for i in range(0,len(ntt)):
+        polyVal.append(PolyN(E[i]))
+    plt.plot(delta, polyVal)
+    plt.title('Nearest neighbour distance vs n_{bar}', fontsize=30)
+    plt.ylabel('$Nearest neighbour distance$',fontsize=20)
+    plt.xlabel('$n_{bar}$',fontsize=20)
+    plt.legend()
+    plt.show()
+    fig.savefig('Billiard_n_diff.png')
     
 def plotContour(X,Y,z, m):
     fig = plt.figure(figsize=(15,10))
