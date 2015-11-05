@@ -16,7 +16,6 @@ def inside(i,j, c, r):
     xl = (r+1)/2
     yl = yr
     R = (r+1)/2-1
-    
     if (j>=xl) and (j<=xr):
         return 1
     else:
@@ -31,7 +30,6 @@ def genMatrix(i,j,a,b):
     for marker in range(0,len(i)):
         R=[None]*len(i)
         for k in range(0, len(i)):
-            
             if marker == 0:
                 if k == marker:
                     R[k] = 4
@@ -40,8 +38,7 @@ def genMatrix(i,j,a,b):
                 elif (i[k] == i[marker] and j[k] == j[marker]+1):
                     R[k] = -1
                 else:
-                    R[k] = 0
-                    
+                    R[k] = 0                    
             elif marker == (len(i)-1):
                 if k == marker:
                     R[k] = 4
@@ -50,8 +47,7 @@ def genMatrix(i,j,a,b):
                 elif (i[k] == i[marker] and j[k] == j[marker]-1):
                     R[k] = -1
                 else:
-                    R[k] = 0
-                    
+                    R[k] = 0                    
             else:
                 if k == marker:
                     R[k] = 4
@@ -69,8 +65,6 @@ def genMatrix(i,j,a,b):
     M = np.array(M)
     return M
         
-        
-    
 def I(i,j, C):
     I=0
     for k in range(0,i-1):
@@ -82,49 +76,24 @@ def ij(I,c):
     i = (I-1)//c +1
     j = (I-1)%c +1
     return i,j
-  
-'''  
-def findStateNumber( state_x, state_y):
-    # currently doesn't return correct state at higher state indices
-    counter=0
-    if state_x > state_y:
-        counter = 1
-    
-    
-    big_step = max(a,b)
-    small_step = min(a,b)
-    deg_count = 0 
-    for i in range(1,n):
-        for j in range(1,n):
-            if ((i**2/a**2)+(j**2/b**2)) < ((state_x**2/a**2)+(state_y**2/b**2)):
-                s.append((i**2)+(j**2))
-                print(i,j)
-            if ((i**2/a**2)+(j**2/b**2)) == ((state_x**2/a**2)+(state_y**2/b**2)):
-                deg_count = deg_count+1
-    print('Number state in list = %i ' % len(s))
-    print('DEGENERACY COUNT: %i' %deg_count)
-'''    
-    
-    
+       
 def arrayFromZ(v, c, r, C, xt, yt):
     Colsum = 0
     z=[None]*r
     for i in range(0,r):
         z[i] = (v[Colsum:Colsum+C[i]])
         Colsum = Colsum+C[i]
-    #print(z)
     z = np.array(z)
     zero = np.zeros(((r+2), (c+2)))
     for i in range(0,r):
         for j in range(0,C[i]): 
             np.put(zero[i+1], [(c+2-C[i])/2+j], z[i][j])
     z = zero*zero
-#    Ix=[]
-#    for i in range(0,r+2):
-#        Ix.append(scipy.integrate.simps(z[i,:], x=xt))
-#        
-#    I = scipy.integrate.simps(Ix, x=yt)
-#    z=z/I
+    Ix=[]
+    for i in range(0,r+2):
+        Ix.append(scipy.integrate.simps(z[i,:], x=xt))    
+    I = scipy.integrate.simps(Ix, x=yt)
+    z=z/I
     return z
     
 def plotMap(xmap,ymap):
@@ -138,9 +107,8 @@ def plotMap(xmap,ymap):
 
 def plot2Dpsi(X,Y,z,m):
 
-    fig = plt.figure(figsize=(10,8))
+    fig = plt.figure(figsize=(14,12))
     ax = fig.add_subplot(111, projection='3d')
-    z = abs(z)
     surf = ax.plot_surface(X,Y,z, cmap=cm.coolwarm, cstride=1, rstride=1)
     fig.colorbar(surf)
     plt.xlabel('$x_i$',fontsize=20)
@@ -153,14 +121,12 @@ def plot2Dpsi(X,Y,z,m):
 def plotEnergies(nt, E, Et):
     fig = plt.figure(figsize=(15,10))
     plt.plot(nt, E, label='Numeric')
-    #plt.plot(nt,Et, label='Analytic')
     plt.title('Energy vs n', fontsize=30)
     plt.xlabel('$n$',fontsize=20)
     plt.ylabel('$Energy$',fontsize=20)
     plt.legend()
     plt.show()
-    fig.savefig('2D_E_vs_n.png')
-    
+    fig.savefig('2D_E_vs_n.png')    
     
 def plotContour(X,Y,z, m):
     fig = plt.figure(figsize=(15,10))
