@@ -9,7 +9,7 @@ import numpy as np
 from numpy import linalg
 import QCfunctStad as qcf
 
-c =5#int(input("Enter number of points in x axis: "))
+c =41#int(input("Enter number of points in x axis: "))
 r = c#int(input("Enter number points in y axis: "))
 a=0.01
 b=a
@@ -34,7 +34,7 @@ H = qcf.genMatrix(xmap,ymap,a,b)
 w, v = linalg.eigh(H)
 
 # enumerate list and sort by eigenvalues, return index of relevant energy level; m labels mth energy level (in sorted list of energies)
-m=0
+m=3
 state_ind = sorted(enumerate(w), key=lambda x: x[1])[m][0]#[len(s)+counter][0]
 
 xt = np.linspace(0,x,c+2)
