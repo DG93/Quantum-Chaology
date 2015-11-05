@@ -8,35 +8,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import cm
 import scipy.integrate
-
-def OE(state):
-    if state%2 == 0:
-        return 1
-    else:
-        return -1
-
-def OE2(i, j):
-    # i labels I++,I+-,I-+,I-- -> [0,1,2,3]    
-    A=[0,2]
-    B=[1,2]
-    # 0,3 1,2 odd odd
-    # 1,3 0,2 even odd
-    # 2,3 0,1 odd even
-    I = 1
-    J = 1
-    if i in B: 
-        I=-1
-    if j in B: 
-        J=-1
-    # if i in B: 
-    #     I=-1
-    #     if j in A: J=-1
-    return (I*J)
+from mpl_toolkits.mplot3d import Axes3D
 
 def delta(x,a):
     if x in a:
-        # a becomes a list of central indices, check if x contained in a
-        #print(x)
         return 1
     else:
         return 0
@@ -47,7 +22,6 @@ def inside(i,j, c, r):
     xl = (r+1)/2
     yl = yr
     R = (r+1)/2-1
-    
     if (j>=xl) and (j<=xr):
         return 1
     else:
@@ -62,7 +36,6 @@ def genMatrix(i,j,a,b):
     for marker in range(0,len(i)):
         R=[None]*len(i)
         for k in range(0, len(i)):
-            
             if marker == 0:
                 if k == marker:
                     R[k] = 4
@@ -72,7 +45,6 @@ def genMatrix(i,j,a,b):
                     R[k] = -1
                 else:
                     R[k] = 0
-                    
             elif marker == (len(i)-1):
                 if k == marker:
                     R[k] = 4
@@ -82,7 +54,6 @@ def genMatrix(i,j,a,b):
                     R[k] = -1
                 else:
                     R[k] = 0
-                    
             else:
                 if k == marker:
                     R[k] = 4
@@ -100,8 +71,6 @@ def genMatrix(i,j,a,b):
     M = np.array(M)
     return M
         
-        
-    
 def I(i,j, C):
     I=0
     for k in range(0,i):
@@ -114,91 +83,60 @@ def ij(I,c):
     j = (I-1)%c +1
     return i,j
   
-'''  
-def findStateNumber( state_x, state_y):
-    # currently doesn't return correct state at higher state indices
-    counter=0
-    if state_x > state_y:
-        counter = 1
-    
-    
-    big_step = max(a,b)
-    small_step = min(a,b)
-    deg_count = 0 
-    for i in range(1,n):
-        for j in range(1,n):
-            if ((i**2/a**2)+(j**2/b**2)) < ((state_x**2/a**2)+(state_y**2/b**2)):
-                s.append((i**2)+(j**2))
-                print(i,j)
-            if ((i**2/a**2)+(j**2/b**2)) == ((state_x**2/a**2)+(state_y**2/b**2)):
-                deg_count = deg_count+1
-    print('Number state in list = %i ' % len(s))
-    print('DEGENERACY COUNT: %i' %deg_count)
-'''    
-    
-# def arrayFromZ0(v, c, r, C, xt, yt):
-#     Colsum = 0
-#     z=[None]*r
-#     #print(v)
-#     for i in range(0,r):
-#         z[i] = (v[Colsum:Colsum+C[i]])
-#         Colsum = Colsum+C[i]
-#     #print(z)
-#     z = np.array(z)
-#     zero = np.zeros(((r+2), (c+2)))
-#     for i in range(0,r):
-#         for j in range(0,C[i]): 
-#             np.put(zero[i+1], [(c+2-C[i])/2+j], z[i][j])
-#     z = zero#*zero
-#     '''
-#     Ix=[]
-#     for i in range(0,r+2):
-#         Ix.append(scipy.integrate.simps(z[i,:], x=xt))
-        
-#     I = scipy.integrate.simps(Ix, x=yt)
-#     z=z/I
-#     '''
-#     return z
-    
-def arrayFromZ(v, c, r, halfC, xt, yt):
+def arrayFromZ(v, c, r, halfC, xt, yt, sym_type):
     Colsum = 0
-    z=[None]*r
-    #print(v)
-    for i in range(0,(r+1)//2):
-        z[i] = (v[Colsum:Colsum+halfC[(r-1)//2+i]])
-        #print(z[i])
-        Colsum = Colsum+halfC[(r-1)//2+i]
-    
-    z = np.array(z)
-    #print(z)
+    vert_odd = 0
+    hor_odd = 0
+    z=[]
+    halfC2 = halfC[(r-1)//2:len(halfC)]
+    if sym_type == "oo": 
+        vert_odd = 1
+        hor_odd = 1
+        z.append(np.zeros((c+1)//2))
+    if sym_type == "oe": 
+        vert_odd = 0
+        hor_odd = 1
+    if sym_type == "eo": 
+        vert_odd = 1
+        hor_odd = 0 
+        z.append(np.zeros((c+1)//2))
+    z_t=[]
+    for i in range(vert_odd,(r+1)//2):
+        print(halfC2[i]-hor_odd, Colsum)
+        if hor_odd == 1: z_t.append(0)
+        for k in range(Colsum,Colsum+halfC2[i]-hor_odd):
+            z_t.append((v[k]))
+        z.append(z_t.copy())    
+        print(z_t)
+        z_t.clear()
+        Colsum = Colsum+halfC2[i]-hor_odd
+    print('z = ')
+    print(z)
     zero = np.zeros(((r+2), (c+2)))
     zero2 = np.zeros(((r+2), (c+2)))
     zero3 = np.zeros(((r+2), (c+2)))
     zero4 = np.zeros(((r+2), (c+2)))
-    
     for i in range(0,(r+1)//2):
         for j in range(0,halfC[(r-1)//2+i]): 
             np.put(zero[(r-1)//2+(i+1)], [((c+1)//2+j)], z[i][j])
             np.put(zero2[(r-1)//2-(i-1)], [((c+1)//2-j)], z[i][j])
             np.put(zero3[(r-1)//2+(i+1)], [((c+1)//2-j)], z[i][j])
             np.put(zero4[(r-1)//2-(i-1)], [((c+1)//2+j)], z[i][j])
-        
     z=zero+zero2+zero3+zero4
-    
     for i in range(0,r+2):
         z[i,(c+2)//2] = z[i,(c+2)//2]/np.sqrt(2)
     for j in range(0,c+2):                       
         z[(r+2)//2,j] = z[(r+2)//2,j]/np.sqrt(2)
-   # np.savetxt('test.txt', z, fmt='%-3.4f')
     z = z*z
-    
     Ix=[]
     for i in range(0,r+2):
         Ix.append(scipy.integrate.simps(z[i,:], x=xt))   
     I = scipy.integrate.simps(Ix, x=yt)
     z=z/I
     return z
-    
+ 
+################################# PLOTTING #################################
+   
 def plotMap(xmap,ymap):
     fig = plt.figure(figsize=(15,15))
     plt.plot(xmap, ymap, 'ro')
@@ -209,7 +147,7 @@ def plotMap(xmap,ymap):
     fig.savefig('Map.png')
 
 def plot2Dpsi(X,Y,z,m, ansatz): 
-    fig = plt.figure(figsize=(10,8))
+    fig = plt.figure(figsize=(14,12))
     ax = fig.add_subplot(111, projection='3d')
     #z = abs(z)
     surf = ax.plot_surface(X,Y,z, cmap=cm.coolwarm, cstride=1, rstride=1)
@@ -227,8 +165,8 @@ def plotEnergies(nt, E, Et):
     plt.plot(nt, E, label='Numeric')
     plt.plot(nt, Et(nt), label='Polynomial')
     plt.title('Energy vs n', fontsize=30)
-    plt.ylabel('$Energy$',fontsize=20)
-    plt.xlabel('$n$',fontsize=20)
+    plt.ylabel('Energy',fontsize=20)
+    plt.xlabel('n',fontsize=20)
     plt.legend()
     plt.show()
     fig.savefig('Billiard_E_vs_n.png')
@@ -238,18 +176,19 @@ def plotN(E,polyN, nt):
     plt.plot(polyN(E), E, label='Polynomial')
     plt.plot(nt, E, label='Numeric')
     plt.title('n vs energy', fontsize=30)
-    plt.xlabel('$Energy$',fontsize=20)
-    plt.ylabel('$n$',fontsize=20)
+    plt.xlabel('Energy',fontsize=20)
+    plt.ylabel('n',fontsize=20)
     plt.legend()
     plt.show()
     fig.savefig('Billiard_n_vs_E.png')
     
 def plotPolyN(nt, polyN, E):
     fig = plt.figure(figsize=(15,10))
-    plt.plot(nt, polyN(E))
-    plt.title('n vs $n_{bar}$', fontsize=30)
-    plt.xlabel('$n_{bar}$',fontsize=20)
-    plt.ylabel('$n$',fontsize=20)
+    plt.plot(nt, polyN(E), label='Polynomial fit')
+    plt.plot(nt,nt, label='Perfect fit')
+    plt.title('n vs Polynomial n', fontsize=30)
+    plt.xlabel('Polynomial n',fontsize=20)
+    plt.ylabel('n',fontsize=20)
     plt.legend()
     plt.show()
     fig.savefig('Billiard_n_vs_polyn.png')
@@ -258,19 +197,13 @@ def plotDelta(nt, PolyN, E):
     delta=[]
     ntt = []
     for i in range(0,len(nt)-1):
-        delta.append(PolyN(E[i]+1)-PolyN(E[i]))
+        delta.append(abs(PolyN(E[i]+1)-PolyN(E[i])))
         ntt.append(nt[i]-nt[0])
     fig = plt.figure(figsize=(15,10))
-#    polyVal=[]
-#    for i in range(0,len(ntt)):
-#        polyVal.append(PolyN(E[i]))
-    #plt.plot(delta, polyVal)
-    plt.hist(delta, bins=50,  histtype='bar')        
-        
-        
-    plt.title('$n_{bar}$ histogram', fontsize=30)
+    plt.hist(delta, bins=50,  histtype='bar', label='Delta = n($E_{i+1}$) - n($E_{i}$)')        
+    plt.title('Delta histogram', fontsize=30)
     plt.ylabel('Frequency',fontsize=20)
-    plt.xlabel('$n_{bar}$',fontsize=20)
+    plt.xlabel('Delta',fontsize=20)
     plt.legend()
     plt.show()
     fig.savefig('Billiard_nbar_hist.png')
