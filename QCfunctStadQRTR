@@ -102,16 +102,16 @@ def arrayFromZ(v, c, r, halfC, xt, yt, sym_type):
         z.append(np.zeros((c+1)//2))
     z_t=[]
     for i in range(vert_odd,(r+1)//2):
-        print(halfC2[i]-hor_odd, Colsum)
+        #print(halfC2[i]-hor_odd, Colsum)
         if hor_odd == 1: z_t.append(0)
         for k in range(Colsum,Colsum+halfC2[i]-hor_odd):
             z_t.append((v[k]))
         z.append(z_t.copy())    
-        print(z_t)
+        #print(z_t)
         z_t.clear()
         Colsum = Colsum+halfC2[i]-hor_odd
-    print('z = ')
-    print(z)
+    #print('z = ')
+    #print(z)
     zero = np.zeros(((r+2), (c+2)))
     zero2 = np.zeros(((r+2), (c+2)))
     zero3 = np.zeros(((r+2), (c+2)))
@@ -193,22 +193,26 @@ def plotPolyN(nt, polyN, E):
     plt.show()
     fig.savefig('Billiard_n_vs_polyn.png')
     
-def plotDelta(nt, PolyN, E):
+def plotDelta(nt, PolyN, E, sym_type,r,c):
+    if r == c:
+        string = 'Circle'
+    else:
+        string = 'Billiard'
     delta=[]
     ntt = []
     for i in range(0,len(nt)-1):
-        delta.append(abs(PolyN(E[i]+1)-PolyN(E[i])))
+        delta.append(abs(PolyN(E[i+1])-PolyN(E[i])))
         ntt.append(nt[i]-nt[0])
     fig = plt.figure(figsize=(15,10))
     plt.hist(delta, bins=50,  histtype='bar', label='Delta = n($E_{i+1}$) - n($E_{i}$)')        
-    plt.title('Delta histogram', fontsize=30)
+    plt.title('Delta histogram: %s' % sym_type, fontsize=30)
     plt.ylabel('Frequency',fontsize=20)
     plt.xlabel('Delta',fontsize=20)
     plt.legend()
     plt.show()
-    fig.savefig('Billiard_nbar_hist.png')
+    fig.savefig('%s_nbar_hist_%s.png' %(string, sym_type))
     
-def plotContour(X,Y,z, m):
+def plotContour(X,Y,z,m):
     fig = plt.figure(figsize=(15,10))
     plt.contourf(X, Y, z, 100, cmap=cm.gist_rainbow)
     plt.title('Contour plot for %ith energy' %m, fontsize=14)
