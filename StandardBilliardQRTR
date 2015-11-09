@@ -12,8 +12,8 @@ from math import sqrt,sin,pi
 import scipy
 
 # r and c MUST be odd numbers here
-r =41#int(input("Enter number of points in x axis: "))
-c = r#5#r#int(input("Enter number points in y axis: "))
+r =51#int(input("Enter number of points in x axis: "))
+c = 201#r#5#r#int(input("Enter number points in y axis: "))
 a=0.01
 b=a
 x = c*a#float(input("Enter width (x axis) of well: "))
@@ -66,8 +66,8 @@ for J in range(0,c):
         M.append( qcf.I((r-1)//2, J, C) )
         
 
-print('Mvert = ')
-print(M_vert)
+#print('Mvert = ')
+#print(M_vert)
 M2=[]
 M2.append(qcf.I((r-1)//2, (c-1)//2, C) )
 
@@ -80,7 +80,7 @@ Q_arr.append(Q4)
 sH = np.zeros((N,N))      
 M_sym=[]
 sym_ind=[]
-sym_type="oo"#[]
+sym_type="ee"
 if sym_type == "ee": 
     sym_ind = [0,1,2,3]
     bord_len=0
@@ -108,23 +108,23 @@ for I in range(0,N):
                         if (Q_arr[i][I] not in M_sym) and (Q_arr[j][J] not in M_sym): H_sym.append(sH[I,J])
             
 
-print('length of hamilton sym: ')                       
-print(len(H_sym))
+#print('length of hamilton sym: ')                       
+#print(len(H_sym))
 
 if sym_type != "ee": 
     shape = (N-bord_len,N-bord_len)                   
     H_sym = np.reshape( H_sym, shape ) 
-    print('H_sym =')
-    print(H_sym)
+    #print('H_sym =')
+    #print(H_sym)
     sH=H_sym
                    
-print(M)
-print('sH = ')
-print(sH)
+#print(M)
+#print('sH = ')
+#print(sH)
 
 w, v = linalg.eig(sH)
-print('v= ')
-print(v)
+#print('v= ')
+#print(v)
 s_state = 200#int((state+1)/2)
 s_state_ind = sorted(enumerate(w), key=lambda x: x[1])[s_state][0]
 
@@ -150,10 +150,10 @@ diff = top-bottom+1
 print(n)
 print(top)
 print(bottom)
-print(diff)
+#print(diff)
 nt = np.linspace(bottom,top,diff)
 redE = E[bottom:(top+1)]
 redPolyN = np.poly1d(np.polyfit(redE, nt, 10))
 qcf.plotN(redE, redPolyN,nt)
 qcf.plotPolyN(nt, redPolyN, redE)
-qcf.plotDelta(nt,redPolyN, redE)
+qcf.plotDelta(nt,redPolyN, redE, sym_type,r,c)
