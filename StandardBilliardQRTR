@@ -7,94 +7,42 @@ Created on Wed Sep 30 17:35:32 2015
 """
 import numpy as np
 from numpy import linalg
-import QCfunctStadQRTR as qcf
+import QCfunctStadQRTR as qcfunc
 from math import sqrt,sin,pi
 import scipy
 
 # r and c MUST be odd numbers here
-r =51#int(input("Enter number of points in x axis: "))
-c = 201#r#5#r#int(input("Enter number points in y axis: "))
-a=0.01
-b=a
-x = c*a#float(input("Enter width (x axis) of well: "))
-y = r*a#float(input("Enter depth (y axis) of well: "))
-
-xmap=[]
-ymap=[]
-C=[]
-n=0
-for i in range(1,r+1):
-    col_count = 0
-    for j in range(1,c+1):
-        if qcf.inside(i,j,c,r) == 1: 
-            xmap.append(j)
-            ymap.append(i)
-            col_count = col_count +1
-    C.append(col_count)
-
-for i in range(0,(r+1)//2): 
-        n = n+(C[i]+1)/2    
-
-      
-qcf.plotMap(xmap,ymap)
-H = qcf.genMatrix(xmap,ymap,a,b)
-N = int(n)
-
-halfC=[]
-for i in range(0,r):
-    halfC.append((C[i]+1)//2)
-
-Q =[]
-Q2=[]
-Q3=[]
-Q4=[]
-for I in range(0,(r+1)//2):
-    for J in range(0,halfC[I+(r-1)//2]):        
-        Q.append(qcf.I((r+1)//2-1+I,halfC[I+(r+1)//2-1]-1+J,C))
-        Q2.append(qcf.I((r+1)//2-1+I,halfC[I+(r+1)//2-1]-1-J,C))
-        Q3.append(qcf.I((r+1)//2-1-I,halfC[I+(r+1)//2-1]-1+J,C))
-        Q4.append(qcf.I((r+1)//2-1-I,halfC[I+(r+1)//2-1]-1-J,C))
-
-M=[]
-M_vert=[]
-M_hor=[]
-for I in range(0,r):
-        M_vert.append(qcf.I(I,halfC[I]-1,C))
-        M.append(qcf.I(I,halfC[I]-1,C))
-for J in range(0,c):
-        M_hor.append( qcf.I((r-1)//2, J, C) )
-        M.append( qcf.I((r-1)//2, J, C) )
-        
-
-#print('Mvert = ')
-#print(M_vert)
-M2=[]
-M2.append(qcf.I((r-1)//2, (c-1)//2, C) )
-
-Q_arr=[]
-Q_arr.append(Q)
-Q_arr.append(Q2)
-Q_arr.append(Q3)
-Q_arr.append(Q4)
+r = 51
+c = 101
+a = 0.1
+qcf = qcfunc.QC(r,c,a)
+qcf.CreateMap()
+qcf.NumberPointsInQRTR()      
+qcf.plotMap()
+H = qcf.genMatrix()
+#print(H)
+N = int(qcf.n)
+qcf.CreateIndexArrays()
+qcf.FillM()
             
 sH = np.zeros((N,N))      
 M_sym=[]
 sym_ind=[]
-sym_type="ee"
+sym_type="oo"
 if sym_type == "ee": 
     sym_ind = [0,1,2,3]
     bord_len=0
 if sym_type == "oe":
     sym_ind = [0,2]
-    M_sym = M_vert
+    M_sym = qcf.M_vert
     bord_len = (r+1)//2
 if sym_type == "eo":
     sym_ind = [0,1]
-    M_sym = M_hor
+    M_sym = qcf.M_hor
     bord_len = (c+1)//2
 if sym_type == "oo": 
     sym_ind = [0]
-    M_sym = M
+    M_sym = qcf.M
     bord_len = (c+1)//2+(r+1)//2-1
 
 H_sym=[]
@@ -103,40 +51,37 @@ for I in range(0,N):
     for J in range(0,N):
             for i in sym_ind:
                 for j in sym_ind:  
-                    sH[I,J] = sH[I,J]+H[Q_arr[i][I],Q_arr[j][J]]/( np.sqrt((1+qcf.delta(Q_arr[i][I],M2))*(1+qcf.delta(Q_arr[j][J],M2))*(1+qcf.delta(Q_arr[i][I],M))*(1+qcf.delta(Q_arr[j][J],M))) )
+                    sH[I,J] = sH[I,J]+H[qcf.Q_arr[i][I],qcf.Q_arr[j][J]] / qcf.deltaQRTR(i,I,j,J)
                     if i == sym_ind[-1] and j == sym_ind[-1]:
-                        if (Q_arr[i][I] not in M_sym) and (Q_arr[j][J] not in M_sym): H_sym.append(sH[I,J])
+                        if (qcf.Q_arr[i][I] not in M_sym) and (qcf.Q_arr[j][J] not in M_sym): H_sym.append(sH[I,J])
             
 
-#print('length of hamilton sym: ')                       
-#print(len(H_sym))
 
 if sym_type != "ee": 
     shape = (N-bord_len,N-bord_len)                   
     H_sym = np.reshape( H_sym, shape ) 
-    #print('H_sym =')
-    #print(H_sym)
+
     sH=H_sym
-                   
-#print(M)
+
 #print('sH = ')
 #print(sH)
 
 w, v = linalg.eig(sH)
-#print('v= ')
-#print(v)
-s_state = 200#int((state+1)/2)
-s_state_ind = sorted(enumerate(w), key=lambda x: x[1])[s_state][0]
-
-xt = np.linspace(0,x,c+2)
-yt = np.linspace(0,y,r+2)
+xt = np.linspace(0,qcf.x,c+2)
+yt = np.linspace(0,qcf.y,r+2)
 X, Y = np.meshgrid(xt, yt)
-z = qcf.arrayFromZ(v[:,s_state_ind], c, r, halfC, xt, yt, sym_type)
+
 
 ################################# PLOTTING #################################
-
-qcf.plot2Dpsi(X,Y,z,s_state,0)
-qcf.plotContour(X,Y,z,s_state)     
+repeatflag = "Y"
+while repeatflag == "Y":
+    s_state = 0#int(input("Plot which state? "))
+    s_state_ind = sorted(enumerate(w), key=lambda x: x[1])[s_state][0]
+    z = qcf.arrayFromZ(v[:,s_state_ind], xt, yt, sym_type)
+    qcf.plot2Dpsi(X,Y,z,s_state,0)
+    qcf.plotContour(X,Y,z,s_state) 
+    repeatflag = "n"#input("Enter Y to plot another energy level: ")
+    
 n = len(w)
 nt = np.linspace(1,n,n)
 E = sorted(w/4)
