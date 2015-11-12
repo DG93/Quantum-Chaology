@@ -102,5 +102,5 @@ qcf.plotPolyN(nt, redPolyN, redE)
 qcf.plotDelta(nt,redPolyN, redE, sym_type,r,c)
 
 # Delta-3 Statistic
-delta3 = qcf.delta3(redE, nt, diff)
+delta3 = qcf.delta3(redE, nt, diff, redPolyN)
 qcf.plotDelta3(delta3, diff) # should be x**1/2 shape, c.f. p.254 Reichl
