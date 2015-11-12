@@ -77,7 +77,7 @@ repeatflag = "Y"
 while repeatflag == "Y":
     s_state = 0#int(input("Plot which state? "))
     s_state_ind = sorted(enumerate(w), key=lambda x: x[1])[s_state][0]
-    z = qcf.arrayFromZ(v[:,s_state_ind], xt, yt, sym_type)
+    z = qcf.arrayFromZ(v[:,s_state_ind], sym_type)
     qcf.plot2Dpsi(X,Y,z,s_state,0)
     qcf.plotContour(X,Y,z,s_state) 
     repeatflag = "n"#input("Enter Y to plot another energy level: ")
@@ -88,17 +88,19 @@ E = sorted(w/4)
 polyN = np.poly1d(np.polyfit(E, nt, 10))
 qcf.plotN(E, polyN,nt)
 
-#Limit plot to linear + interesting region
+# Limit plot to linear + interesting region
 top = int(3*n/8)
 bottom = int(n/5)
 diff = top-bottom+1
-print(n)
-print(top)
-print(bottom)
-#print(diff)
+print('Total number of points in stadium: {}'.format(n))
+print('Points taken in the range {} : {}'.format(bottom, top))
 nt = np.linspace(bottom,top,diff)
 redE = E[bottom:(top+1)]
 redPolyN = np.poly1d(np.polyfit(redE, nt, 10))
 qcf.plotN(redE, redPolyN,nt)
 qcf.plotPolyN(nt, redPolyN, redE)
 qcf.plotDelta(nt,redPolyN, redE, sym_type,r,c)
+
+# Delta-3 Statistic
+delta3 = qcf.delta3(redE, nt, diff)
+qcf.plotDelta3(delta3, diff) # should be x**1/2 shape, c.f. p.254 Reichl
