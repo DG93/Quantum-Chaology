@@ -1,0 +1,29 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Tue Nov 10 15:46:51 2015
+
+@author: mbyx9dl2
+"""
+import matplotlib.pyplot as plt
+import numpy as np
+import QRTRstad as QS
+r = 101
+c = [101,151,201]#151,201,301]
+sym = ["oo"]#,"oe","eo","oo"]
+
+# directory must contain subdirectory '/Delta_plots', which contrains '/oo', '/oe' etc.
+
+for i in sym:
+    filename = 'parameters_%s.txt' % i
+    par_file = open(filename, 'w') #hacky way of clearing previous data, as .clear() isn't a thing. WHY?
+    par_file.close()
+    par_file = open(filename, 'a')    
+    par_file.write('rows\tcols\tpar0\tpar1\tpar1\n')
+    for j in c:
+        QS.main(r,j,i)
+        
+# Two subplots, unpack the axes array immediately
+#f, (ax1, ax2) = plt.subplots(1, 2, sharey=True)
+#ax1.plot(x, y)
+#ax1.set_title('Sharing Y axis')
+#ax2.scatter(x, y) 
