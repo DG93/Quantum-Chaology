@@ -1,0 +1,80 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Wed Sep 30 17:35:32 2015
+
+2D infinite potential wells
+@author: Dan Goldsmith & Dan Locke
+"""
+import numpy as np
+from numpy import linalg
+import QCfunctStadQRTR as qcfunc
+
+def main(arg1,arg2,arg3):
+    # r and c MUST be odd numbers here
+    r = arg1#float(sys.argv[0])#11
+    c = arg2#float(sys.argv[1])#21
+    a = 0.1
+    sym_type=arg3#"oo"
+    qcf = qcfunc.QC(r,c,a)                      # create object
+    qcf.CreateMap()                             # find which points lie inside stadium
+    qcf.NumberPointsInQRTR()                    # count number of points that fall in bottome right quarter   
+    qcf.plotMap()                               # plot the points inside stadium
+    H = qcf.genMatrix()                         # generate full Hamiltonian, before symmetry considered
+    N = int(qcf.n)                              # number of points in quarter
+    qcf.CreateIndexArrays()                     # Fill arrays corresponding to I++,I+-.I-+,I--
+    qcf.FillM()                                 # Fill lists with boundary conditions for centre lines      
+    qcf.Symmetry(sym_type)                      # Depending on symmetry, choose which points to consider
+    
+    H_sym=[]
+    sH = np.zeros((N,N)) 
+    for I in range(0,N):
+        for J in range(0,N):
+                for i in qcf.sym_ind:
+                    for j in qcf.sym_ind:  
+                        sH[I,J] = sH[I,J]+H[qcf.Q_arr[i][I],qcf.Q_arr[j][J]] / qcf.deltaQRTR(i,I,j,J)
+                        if i == qcf.sym_ind[-1] and j == qcf.sym_ind[-1]:
+                            if (qcf.Q_arr[i][I] not in qcf.M_sym) and (qcf.Q_arr[j][J] not in qcf.M_sym): H_sym.append(sH[I,J])
+                
+    
+    
+    if sym_type != "ee": 
+        shape = (N-qcf.bord_len,N-qcf.bord_len)                   
+        H_sym = np.reshape( H_sym, shape ) 
+        sH=H_sym
+    
+    w, v = linalg.eig(sH)
+    X, Y = np.meshgrid(qcf.xt, qcf.yt)
+    
+    
+    ################################# PLOTTING #################################
+    repeatflag = "N"
+    while repeatflag != "N":
+        print("There are %i total correct solutions" %(len(w)//2) )
+        s_state = int(input("Plot which state? "))
+        s_state_ind = sorted(enumerate(w), key=lambda x: x[1])[s_state][0]
+        z = qcf.arrayFromZ(v[:,s_state_ind], sym_type)
+        qcf.plot2Dpsi(X,Y,z,s_state,0)
+        qcf.plotContour(X,Y,z,s_state) 
+        repeatflag = input("Enter N to NOT plot another energy level: ")
+        
+    n = len(w)
+    nt = np.linspace(1,n,n)
+    E = sorted(w/4)
+    polyN = np.poly1d(np.polyfit(E, nt, 10))
+    qcf.plotN(E, polyN,nt)
+    
+    #Limit plot to linear + interesting region
+    top = int(3*n/8)
+    bottom = int(n/5)
+    diff = top-bottom+1
+    print(n)
+    print(top)
+    print(bottom)
+    #print(diff)
+    nt = np.linspace(bottom,top,diff)
+    redE = E[bottom:(top+1)]
+    redPolyN = np.poly1d(np.polyfit(redE, nt, 10))
+    qcf.plotN(redE, redPolyN,nt)
+    qcf.plotPolyN(nt, redPolyN, redE)
+    qcf.plotDelta(nt,redPolyN, redE, sym_type,r,c)
+
