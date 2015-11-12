@@ -10,6 +10,7 @@ from matplotlib import cm
 import scipy.integrate
 from mpl_toolkits.mplot3d import Axes3D
 from scipy.optimize import leastsq
+import scipy as sci
 
 
 class QC:
@@ -29,6 +30,11 @@ class QC:
         self.M_vert=[]
         self.M_hor=[]
         self.M2=[]
+        self.xt = np.linspace(0,self.x,self.c+2)
+        self.yt = np.linspace(0,self.y,self.r+2)
+        self.M_sym=[]
+        self.sym_ind=[]
+        self.bord_len = 0
     
     def delta(self,var,a):
         if var in a:
@@ -155,7 +161,28 @@ class QC:
 #        j = (I-1)%c +1
 #        return i,j
 #      
-    def arrayFromZ(self, v, xt, yt, sym_type):
+
+    def Symmetry(self, sym_type):
+        if sym_type == "ee": 
+            self.sym_ind = [0,1,2,3]
+            self.bord_len=0
+        if sym_type == "oe":
+            self.sym_ind = [0,2]
+            self.M_sym = self.M_vert
+            self.bord_len = (self.r+1)//2
+        if sym_type == "eo":
+            self.sym_ind = [0,1]
+            self.M_sym = self.M_hor
+            self.bord_len = (self.c+1)//2
+        if sym_type == "oo": 
+            self.sym_ind = [0]
+            self.M_sym = self.M
+            self.bord_len = (self.c+1)//2+(self.r+1)//2-1
+
+        
+        
+        
+    def arrayFromZ(self, v, sym_type):
         Colsum = 0
         vert_odd = 0
         hor_odd = 0
@@ -199,11 +226,22 @@ class QC:
         z = z*z
         Ix=[]
         for i in range(0,self.r+2):
-            Ix.append(scipy.integrate.simps(z[i,:], x=xt))   
-        I = scipy.integrate.simps(Ix, x=yt)
+            Ix.append(scipy.integrate.simps(z[i,:], x=self.xt))   
+        I = scipy.integrate.simps(Ix, x=self.yt)
         z=z/I
         return z
-     
+    
+    def delta3(self, redE, nt, diff):
+        a,b = np.polyfit(redE, nt, 1)
+        varDelta3 = []
+        for L in range(1,diff+1):
+            temp = 0   
+            for i in range(0, L):
+                temp = temp + ((nt[i] - a*i - b)**2)
+            varDelta3.append(temp/L)
+        #print(delta3)
+        return varDelta3 # Need Delta3 !!! Must take average over ensemble(?), c.f. p213 Reichl
+    
     ################################# PLOTTING #################################
        
     def plotMap(self):
@@ -266,39 +304,55 @@ class QC:
         if r == c:
             string = 'Circle'
         else:
-            string = 'Billiard'
+            string = 'Stadium'
         delta=[]
         ntt = []
         for i in range(0,len(nt)-1):
             delta.append(abs(PolyN(E[i+1])-PolyN(E[i])))
             ntt.append(nt[i]-nt[0])
         fig = plt.figure(figsize=(15,10))
-        entries, bin_edges, patches = plt.hist(delta, bins=10,  histtype='bar', label='Delta = n($E_{i+1}$) - n($E_{i}$)')
-
+        entries, bin_edges, patches = plt.hist(delta, bins=20,  histtype='bar', normed=True, label='Delta = n($E_{i+1}$) - n($E_{i}$)')
         x = 0.5*(bin_edges[1:] + bin_edges[:-1])
         #print('HERE')
         #print(x)
         y = entries
         #print(x,y)
-        fitfunc  = lambda p, x: p[0]*(x**p[1])*np.exp(-(x**(p[1]+1))*p[2])
+        fitfunc  = lambda p, x: p[0]*(x**p[1])*np.exp(-(x**(p[1]+1))/p[2])
         errfunc  = lambda p, x, y: (y - fitfunc(p, x))
-        init  = [1, 0, 10]
+        init  = [1, 0.5, 10]
         out  = leastsq( errfunc, init, args=(x,y))
         c = out[0]
+        print('Fit Coefficients: {}, {}, {}'.format(c[0],c[1],c[2]))        
+        plt.plot(x, fitfunc(c, x), label='b = %f\nFit' %c[1])
 
-        print("Fit Coefficients:")
-        print(c[0],c[1],c[2])
+        dn=[]
+        for i in range(0,len(nt)-1):
+            dn.append(PolyN(E[i+1])-PolyN(E[i]))
+        D = np.mean(dn)
+        print('Average nearest neighbour spacing, D: %f' %D)
+        b = c[1]
+        P0 = ((1+b)/D) * ((sci.special.gamma(2+b))/(2+b))**(1+b)
+        P2 = ((D*(2+b))/sci.special.gamma(2+b))**(1+b)
+        print('Compare theo with exp:\n P0: {}, {}\n P2: {}, {}'.format(P0,c[0],P2,c[2]))
+        P =  [P0, b, P2]
+        plt.plot(x, fitfunc(P, x), label='Theoretical Fit')
+        Ps = (1/D)*np.exp(-x/D)
+        plt.plot(x, Ps, label='Poisson')
+        Pw = ((np.pi*x)/(2*D**2))*np.exp((-np.pi*x**2)/(4*D**2))
+        plt.plot(x, Pw, label='Wigner')
         
-        plt.plot(x, fitfunc(c, x), label='Brody Distribution')
-
-        
-        plt.title('Delta histogram', fontsize=30)
+        plt.title('Delta histogram: %s' % sym_type, fontsize=30)
         plt.ylabel('Frequency',fontsize=20)
         plt.xlabel('Delta',fontsize=20)
         plt.legend()
         plt.show()
-        fig.savefig('%s_nbar_hist_%s.png' %(string, sym_type))
-        
+        fig.savefig('Delta_plots/%s/%s_nbar_hist_%s_%s.png' %(sym_type, string, self.r, self.c))
+        filename = 'Delta_plots/%s/parameters.txt' %sym_type
+        par_file = open(filename, 'a')
+        par_file.write('%i\t%i\t%f\t%f\t%f\n' %(self.r,self.c,c[0],c[1],c[2]))
+        par_file.close()
+        return fig
+
     def plotContour(self, X,Y,z,m):
         fig = plt.figure(figsize=(15,10))
         plt.contourf(X, Y, z, 100, cmap=cm.gist_rainbow)
@@ -308,3 +362,14 @@ class QC:
         plt.colorbar()
         plt.show()
         fig.savefig('Contour_%i.png' %m)
+        
+    def plotDelta3(self, delta3, diff):
+        fig = plt.figure(figsize=(15,10))
+        L = np.linspace(1, diff, diff)
+        plt.plot(L, delta3, label='Delta-3')
+        plt.title('Delta-3 vs L', fontsize=30)
+        plt.xlabel('$interval, L$',fontsize=20)
+        plt.ylabel('$Delta-3$',fontsize=20)
+        plt.legend()
+        plt.show()
+        fig.savefig('Detla-3.png')
