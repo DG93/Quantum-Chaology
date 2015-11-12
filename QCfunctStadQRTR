@@ -231,17 +231,29 @@ class QC:
         z=z/I
         return z
     
-    def delta3(self, redE, nt, diff):
+    def delta3(self, redE, nt, diff, redPolyN):
         a,b = np.polyfit(redE, nt, 1)
         varDelta3 = []
-        for L in range(1,diff+1):
-            temp = 0   
-            for i in range(0, L):
-                temp = temp + ((nt[i] - a*i - b)**2)
-            varDelta3.append(temp/L)
-        #print(delta3)
-        return varDelta3 # Need Delta3 !!! Must take average over ensemble(?), c.f. p213 Reichl
-    
+        for c in range(0, diff):
+            d = []
+            for L in range(1,diff+1-c):
+                temp = 0   
+                for i in range(c, L+c):
+                    #temp = temp + ((redPolyN(i) - a*(i) - b)**2)
+                    temp = temp + ((nt[i] - a*(i) - b)**2)
+                d.append(temp/L)
+            varDelta3.append(d)
+        print(len(varDelta3))
+        print(varDelta3)
+        print(varDelta3[len(varDelta3)-1])
+        Delta3 = []
+        for j in range(0,len(varDelta3)):
+            Delta3.append(sum(varDelta3[j])/len(varDelta3[j]))
+        #Delta3 = np.mean(varDelta3,axis=1)
+        print(len(Delta3))
+        #print(Delta3)
+        return Delta3 
+            
     ################################# PLOTTING #################################
        
     def plotMap(self):
@@ -372,4 +384,4 @@ class QC:
         plt.ylabel('$Delta-3$',fontsize=20)
         plt.legend()
         plt.show()
-        fig.savefig('Detla-3.png')
+        fig.savefig('Delta-3.png')
