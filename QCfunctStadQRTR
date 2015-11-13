@@ -234,23 +234,26 @@ class QC:
     def delta3(self, redE, nt, diff, redPolyN):
         a,b = np.polyfit(redE, nt, 1)
         varDelta3 = []
-        for c in range(0, diff):
+        #for c in range(0, diff):
+        for L in range(1,diff+1):
             d = []
-            for L in range(1,diff+1-c):
+            #for L in range(1,diff+1-c):
+            for c in range(0, diff+1-L):
                 temp = 0   
                 for i in range(c, L+c):
-                    #temp = temp + ((redPolyN(i) - a*(i) - b)**2)
-                    temp = temp + ((nt[i] - a*(i) - b)**2)
+                    integral = ((nt[i] - redPolyN(redE[i]))**2)*(redE[i+1]-redE[i])
+                    temp = temp + integral
                 d.append(temp/L)
             varDelta3.append(d)
-        print(len(varDelta3))
-        print(varDelta3)
-        print(varDelta3[len(varDelta3)-1])
+        #print(varDelta3)
+#        tt = []
+#        for i in range (0,diff):
+#            t = ((nt[i] - redPolyN(redE[i]))**2) 
+#            tt.append(scipy.integrate.simps(t, x=redE))
+#        print(tt)
         Delta3 = []
         for j in range(0,len(varDelta3)):
             Delta3.append(sum(varDelta3[j])/len(varDelta3[j]))
-        #Delta3 = np.mean(varDelta3,axis=1)
-        print(len(Delta3))
         #print(Delta3)
         return Delta3 
             
@@ -268,9 +271,7 @@ class QC:
     def plot2Dpsi(self, X,Y,z,m, ansatz): 
         fig = plt.figure(figsize=(14,12))
         ax = fig.add_subplot(111, projection='3d')
-        #z = abs(z)
         surf = ax.plot_surface(X,Y,z, cmap=cm.coolwarm, cstride=1, rstride=1)
-        #ax.plot_wireframe(X,Y,ansatz, cstride=1, rstride=1)
         fig.colorbar(surf)
         plt.xlabel('$x_i$',fontsize=20)
         plt.ylabel('$y_i$',fontsize=20)
@@ -284,8 +285,8 @@ class QC:
         plt.plot(nt, E, label='Numeric')
         plt.plot(nt, Et(nt), label='Polynomial')
         plt.title('Energy vs n', fontsize=30)
-        plt.ylabel('Energy',fontsize=20)
-        plt.xlabel('n',fontsize=20)
+        plt.ylabel('n',fontsize=20)
+        plt.xlabel('Energy',fontsize=20)
         plt.legend()
         plt.show()
         fig.savefig('Billiard_E_vs_n.png')
@@ -295,8 +296,8 @@ class QC:
         plt.plot(polyN(E), E, label='Polynomial')
         plt.plot(nt, E, label='Numeric')
         plt.title('n vs energy', fontsize=30)
-        plt.xlabel('Energy',fontsize=20)
-        plt.ylabel('n',fontsize=20)
+        plt.xlabel('n',fontsize=20)
+        plt.ylabel('Energy',fontsize=20)
         plt.legend()
         plt.show()
         fig.savefig('Billiard_n_vs_E.png')
@@ -306,8 +307,8 @@ class QC:
         plt.plot(nt, polyN(E), label='Polynomial fit')
         plt.plot(nt,nt, label='Perfect fit')
         plt.title('n vs Polynomial n', fontsize=30)
-        plt.xlabel('Polynomial n',fontsize=20)
-        plt.ylabel('n',fontsize=20)
+        plt.xlabel('n',fontsize=20)
+        plt.ylabel('Polynomial n',fontsize=20)
         plt.legend()
         plt.show()
         fig.savefig('Billiard_n_vs_polyn.png')
@@ -325,34 +326,29 @@ class QC:
         fig = plt.figure(figsize=(15,10))
         entries, bin_edges, patches = plt.hist(delta, bins=20,  histtype='bar', normed=True, label='Delta = n($E_{i+1}$) - n($E_{i}$)')
         x = 0.5*(bin_edges[1:] + bin_edges[:-1])
-        #print('HERE')
-        #print(x)
         y = entries
-        #print(x,y)
         fitfunc  = lambda p, x: p[0]*(x**p[1])*np.exp(-(x**(p[1]+1))/p[2])
         errfunc  = lambda p, x, y: (y - fitfunc(p, x))
         init  = [1, 0.5, 10]
         out  = leastsq( errfunc, init, args=(x,y))
         c = out[0]
         print('Fit Coefficients: {}, {}, {}'.format(c[0],c[1],c[2]))        
-        plt.plot(x, fitfunc(c, x), label='b = %f\nFit' %c[1])
-
+        plt.plot(x, fitfunc(c, x), label='Fit: b = %f' %c[1])
         dn=[]
         for i in range(0,len(nt)-1):
             dn.append(PolyN(E[i+1])-PolyN(E[i]))
         D = np.mean(dn)
         print('Average nearest neighbour spacing, D: %f' %D)
-        b = c[1]
-        P0 = ((1+b)/D) * ((sci.special.gamma(2+b))/(2+b))**(1+b)
-        P2 = ((D*(2+b))/sci.special.gamma(2+b))**(1+b)
-        print('Compare theo with exp:\n P0: {}, {}\n P2: {}, {}'.format(P0,c[0],P2,c[2]))
-        P =  [P0, b, P2]
-        plt.plot(x, fitfunc(P, x), label='Theoretical Fit')
+#        b = c[1]
+#        P0 = ((1+b)/D) * ((sci.special.gamma(2+b))/(2+b))**(1+b)
+#        P2 = ((D*(2+b))/sci.special.gamma(2+b))**(1+b)
+#        print('Compare theo with exp:\n P0: {}, {}\n P2: {}, {}'.format(P0,c[0],P2,c[2]))
+#        P =  [P0, b, P2]
+#        plt.plot(x, fitfunc(P, x), label='Theoretical Fit')
         Ps = (1/D)*np.exp(-x/D)
         plt.plot(x, Ps, label='Poisson')
         Pw = ((np.pi*x)/(2*D**2))*np.exp((-np.pi*x**2)/(4*D**2))
         plt.plot(x, Pw, label='Wigner')
-        
         plt.title('Delta histogram: %s' % sym_type, fontsize=30)
         plt.ylabel('Frequency',fontsize=20)
         plt.xlabel('Delta',fontsize=20)
