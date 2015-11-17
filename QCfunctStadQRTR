@@ -234,28 +234,17 @@ class QC:
     def delta3(self, redE, nt, diff, redPolyN):
         a,b = np.polyfit(redE, nt, 1)
         varDelta3 = []
-        #for c in range(0, diff):
-        for L in range(1,diff+1):
-            d = []
-            #for L in range(1,diff+1-c):
-            for c in range(0, diff+1-L):
-                temp = 0   
-                for i in range(c, L+c):
-                    integral = ((nt[i] - redPolyN(redE[i]))**2)*(redE[i+1]-redE[i])
-                    temp = temp + integral
-                d.append(temp/L)
-            varDelta3.append(d)
-        #print(varDelta3)
-#        tt = []
-#        for i in range (0,diff):
-#            t = ((nt[i] - redPolyN(redE[i]))**2) 
-#            tt.append(scipy.integrate.simps(t, x=redE))
-#        print(tt)
+        for L in range (1,(diff+1)//2):
+            r = redE[len(redE)//2 -L: len(redE)//2 +L]
+            t=((nt[len(redE)//2 -L: len(redE)//2 +L] - redPolyN(redE[len(redE)//2 -L: len(redE)//2 +L]))**2)
+            varDelta3.append(scipy.integrate.simps(t, x=r)/L)
         Delta3 = []
-        for j in range(0,len(varDelta3)):
-            Delta3.append(sum(varDelta3[j])/len(varDelta3[j]))
-        #print(Delta3)
-        return Delta3 
+        print(len(varDelta3))
+        print(varDelta3)
+#        for j in range(0,len(varDelta3)):
+#            Delta3.append(sum(varDelta3)/len(varDelta3))
+#        print(Delta3)
+        return varDelta3 
             
     ################################# PLOTTING #################################
        
@@ -346,9 +335,11 @@ class QC:
 #        P =  [P0, b, P2]
 #        plt.plot(x, fitfunc(P, x), label='Theoretical Fit')
         Ps = (1/D)*np.exp(-x/D)
-        plt.plot(x, Ps, label='Poisson')
+        if string == 'Circle':
+            plt.plot(x, Ps, label='Poisson')
         Pw = ((np.pi*x)/(2*D**2))*np.exp((-np.pi*x**2)/(4*D**2))
-        plt.plot(x, Pw, label='Wigner')
+        if string == 'Stadium':
+            plt.plot(x, Pw, label='Wigner')
         plt.title('Delta histogram: %s' % sym_type, fontsize=30)
         plt.ylabel('Frequency',fontsize=20)
         plt.xlabel('Delta',fontsize=20)
@@ -371,9 +362,9 @@ class QC:
         plt.show()
         fig.savefig('Contour_%i.png' %m)
         
-    def plotDelta3(self, delta3, diff):
+    def plotDelta3(self, delta3):
         fig = plt.figure(figsize=(15,10))
-        L = np.linspace(1, diff, diff)
+        L = np.linspace(1, len(delta3), len(delta3))
         plt.plot(L, delta3, label='Delta-3')
         plt.title('Delta-3 vs L', fontsize=30)
         plt.xlabel('$interval, L$',fontsize=20)
