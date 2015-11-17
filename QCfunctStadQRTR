@@ -1,11 +1,17 @@
 # -*- coding: utf-8 -*-
+"""
+Created on Tue Oct 13 14:03:57 2015
+
+@author: mbyx9dl2
+"""
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import cm
 import scipy.integrate
 from mpl_toolkits.mplot3d import Axes3D
-from scipy.optimize import leastsq
+from scipy.optimize import curve_fit
 import scipy as sci
+
 
 class QC:
     def __init__(self,r,c,a):
@@ -54,6 +60,21 @@ class QC:
             elif(j>xr)and((j-xr)**2+(i-yr)**2<=R**2):
                 return 1
             else: return 0
+            
+#    def shape_outline(self, *j):
+#        xr = (self.c+1)-(self.r+1)/2
+#        yr = (self.r+1)/2
+#        xl = (self.r+1)/2
+#        yl = yr
+#        R = (self.r+1)/2-1
+#        if (j>=xl) and (j<=xr):
+#            return 0 # bottom line
+#        else:
+#            if(j<xl):
+#                return np.sqrt(R**2-(j-xl)**2)+yl
+#            elif(j>xr):
+#                return np.sqrt(R**2-(j-xr)**2)+yr
+#            else: return 0            
         
     def CreateMap(self):
         for i in range(1,self.r+1):
@@ -147,7 +168,9 @@ class QC:
             M.append(R)
         M = np.array(M)
         return M
-                    
+            
+
+#        
 #    def ij(I,c):
 #        i = (I-1)//c +1
 #        j = (I-1)%c +1
@@ -171,6 +194,8 @@ class QC:
             self.M_sym = self.M
             self.bord_len = (self.c+1)//2+(self.r+1)//2-1
 
+        
+        
         
     def arrayFromZ(self, v, sym_type):
         Colsum = 0
@@ -235,7 +260,7 @@ class QC:
         Delta3=np.sum(varDelta3, axis=0)
         for j in range(0,len(Delta3)):
             Delta3[j] = Delta3[j] / (len(varDelta3))
-        return Delta3 
+        return Delta3  
             
     ################################# PLOTTING #################################
        
@@ -304,16 +329,19 @@ class QC:
             delta.append(abs(PolyN(E[i+1])-PolyN(E[i])))
             ntt.append(nt[i]-nt[0])
         fig = plt.figure(figsize=(15,10))
-        entries, bin_edges, patches = plt.hist(delta, bins=20,  histtype='bar', normed=True, label='Delta = n($E_{i+1}$) - n($E_{i}$)')
+        entries, bin_edges, patches = plt.hist(delta, bins=10,  histtype='bar', normed=True, label='Delta = n($E_{i+1}$) - n($E_{i}$)')
         x = 0.5*(bin_edges[1:] + bin_edges[:-1])
         y = entries
-        fitfunc  = lambda p, x: p[0]*(x**p[1])*np.exp(-(x**(p[1]+1))/p[2])
-        errfunc  = lambda p, x, y: (y - fitfunc(p, x))
+        def fitfunc(x, *p):
+            return p[0]*(x**p[1])*np.exp(-(x**(p[1]+1))/p[2])
+
         init  = [1, 0.5, 10]
-        out  = leastsq( errfunc, init, args=(x,y))
-        c = out[0]
+        sigma_y = np.sqrt(y)  # Adding Poisson errors in y
+        popt, pcov  = curve_fit(fitfunc, x, y, p0=init, sigma=sigma_y, absolute_sigma=False)
+        c = popt
+        c_err = np.sqrt(np.diag(pcov))
         print('Fit Coefficients: {}, {}, {}'.format(c[0],c[1],c[2]))        
-        plt.plot(x, fitfunc(c, x), label='Fit: b = %f' %c[1])
+        plt.plot(x, fitfunc(x, *c), label='Fit: b = %1.3f \u00B1 %1.3f' %(c[1], c_err[1]) )
         dn=[]
         for i in range(0,len(nt)-1):
             dn.append(PolyN(E[i+1])-PolyN(E[i]))
@@ -335,14 +363,14 @@ class QC:
         par_file = open(filename, 'a')
         par_file.write('%i\t%i\t%f\t%f\t%f\n' %(self.r,self.c,c[0],c[1],c[2]))
         par_file.close()
-        return fig
+        return c[1], c_err[1]
 
     def plotContour(self, X,Y,z,m,r,c):
         if r == c:
             string = 'Circle'
         else:
             string = 'Stadium'
-        fig = plt.figure(figsize=(15,10)) # figsize=(15,12) for circle
+        fig = plt.figure(figsize=(15,12)) # figsize=(15,12) for circle, figsize=(25,10) for 2:1
         plt.contourf(X, Y, z, 100, cmap=cm.gist_rainbow)
         plt.title('Contour plot for %ith energy' %m, fontsize=14)
         plt.xlabel('$x$',fontsize=20)
