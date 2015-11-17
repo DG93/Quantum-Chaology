@@ -1,9 +1,4 @@
 # -*- coding: utf-8 -*-
-"""
-Created on Tue Oct 13 14:03:57 2015
-
-@author: mbyx9dl2
-"""
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import cm
@@ -11,7 +6,6 @@ import scipy.integrate
 from mpl_toolkits.mplot3d import Axes3D
 from scipy.optimize import leastsq
 import scipy as sci
-
 
 class QC:
     def __init__(self,r,c,a):
@@ -153,9 +147,7 @@ class QC:
             M.append(R)
         M = np.array(M)
         return M
-            
-
-#        
+                    
 #    def ij(I,c):
 #        i = (I-1)//c +1
 #        j = (I-1)%c +1
@@ -179,8 +171,6 @@ class QC:
             self.M_sym = self.M
             self.bord_len = (self.c+1)//2+(self.r+1)//2-1
 
-        
-        
         
     def arrayFromZ(self, v, sym_type):
         Colsum = 0
@@ -231,20 +221,21 @@ class QC:
         z=z/I
         return z
     
-    def delta3(self, redE, nt, diff, redPolyN):
+    def delta3(self, redE, nt, redPolyN):
         a,b = np.polyfit(redE, nt, 1)
         varDelta3 = []
-        for L in range (1,(diff+1)//2):
-            r = redE[len(redE)//2 -L: len(redE)//2 +L]
-            t=((nt[len(redE)//2 -L: len(redE)//2 +L] - redPolyN(redE[len(redE)//2 -L: len(redE)//2 +L]))**2)
-            varDelta3.append(scipy.integrate.simps(t, x=r)/L)
-        Delta3 = []
-        print(len(varDelta3))
-        print(varDelta3)
-#        for j in range(0,len(varDelta3)):
-#            Delta3.append(sum(varDelta3)/len(varDelta3))
-#        print(Delta3)
-        return varDelta3 
+        l = len(redE)
+        for c in range(l//10, 9*l//10):
+            temp=[]
+            for L in range (1,l//10+1):
+                r = redE[c-L:c+L]
+                t=((nt[c-L:c+L] - redPolyN(redE[c-L:c+L]))**2)
+                temp.append(scipy.integrate.simps(t, x=r)/L)
+            varDelta3.append(temp)
+        Delta3=np.sum(varDelta3, axis=0)
+        for j in range(0,len(Delta3)):
+            Delta3[j] = Delta3[j] / (len(varDelta3))
+        return Delta3 
             
     ################################# PLOTTING #################################
        
@@ -282,9 +273,9 @@ class QC:
         
     def plotN(self, E,polyN, nt):
         fig = plt.figure(figsize=(15,10))
-        plt.plot(polyN(E), E, label='Polynomial')
+        plt.plot(polyN(E), E, label='Polynomial fit')
         plt.plot(nt, E, label='Numeric')
-        plt.title('n vs energy', fontsize=30)
+        plt.title('n vs Energy', fontsize=30)
         plt.xlabel('n',fontsize=20)
         plt.ylabel('Energy',fontsize=20)
         plt.legend()
@@ -295,9 +286,9 @@ class QC:
         fig = plt.figure(figsize=(15,10))
         plt.plot(nt, polyN(E), label='Polynomial fit')
         plt.plot(nt,nt, label='Perfect fit')
-        plt.title('n vs Polynomial n', fontsize=30)
+        plt.title('n vs Polynomial fit in n', fontsize=30)
         plt.xlabel('n',fontsize=20)
-        plt.ylabel('Polynomial n',fontsize=20)
+        plt.ylabel('Polynomial fit in n',fontsize=20)
         plt.legend()
         plt.show()
         fig.savefig('Billiard_n_vs_polyn.png')
@@ -328,12 +319,6 @@ class QC:
             dn.append(PolyN(E[i+1])-PolyN(E[i]))
         D = np.mean(dn)
         print('Average nearest neighbour spacing, D: %f' %D)
-#        b = c[1]
-#        P0 = ((1+b)/D) * ((sci.special.gamma(2+b))/(2+b))**(1+b)
-#        P2 = ((D*(2+b))/sci.special.gamma(2+b))**(1+b)
-#        print('Compare theo with exp:\n P0: {}, {}\n P2: {}, {}'.format(P0,c[0],P2,c[2]))
-#        P =  [P0, b, P2]
-#        plt.plot(x, fitfunc(P, x), label='Theoretical Fit')
         Ps = (1/D)*np.exp(-x/D)
         if string == 'Circle':
             plt.plot(x, Ps, label='Poisson')
@@ -352,15 +337,19 @@ class QC:
         par_file.close()
         return fig
 
-    def plotContour(self, X,Y,z,m):
-        fig = plt.figure(figsize=(15,10))
+    def plotContour(self, X,Y,z,m,r,c):
+        if r == c:
+            string = 'Circle'
+        else:
+            string = 'Stadium'
+        fig = plt.figure(figsize=(15,10)) # figsize=(15,12) for circle
         plt.contourf(X, Y, z, 100, cmap=cm.gist_rainbow)
         plt.title('Contour plot for %ith energy' %m, fontsize=14)
         plt.xlabel('$x$',fontsize=20)
         plt.ylabel('$y$',fontsize=20)
         plt.colorbar()
         plt.show()
-        fig.savefig('Contour_%i.png' %m)
+        fig.savefig('%s_%i_%i_Contour_%i.png' %(string,r,c,m))
         
     def plotDelta3(self, delta3):
         fig = plt.figure(figsize=(15,10))
