@@ -8,99 +8,71 @@ Created on Wed Sep 30 17:35:32 2015
 import numpy as np
 from numpy import linalg
 import QCfunctStadQRTR as qcfunc
-from math import sqrt,sin,pi
-import scipy
 
 # r and c MUST be odd numbers here
 r = 51
 c = 101
 a = 0.1
-qcf = qcfunc.QC(r,c,a)
-qcf.CreateMap()
-qcf.NumberPointsInQRTR()      
-qcf.plotMap()
-H = qcf.genMatrix()
-#print(H)
-N = int(qcf.n)
-qcf.CreateIndexArrays()
-qcf.FillM()
-            
-sH = np.zeros((N,N))      
-M_sym=[]
-sym_ind=[]
 sym_type="oo"
-if sym_type == "ee": 
-    sym_ind = [0,1,2,3]
-    bord_len=0
-if sym_type == "oe":
-    sym_ind = [0,2]
-    M_sym = qcf.M_vert
-    bord_len = (r+1)//2
-if sym_type == "eo":
-    sym_ind = [0,1]
-    M_sym = qcf.M_hor
-    bord_len = (c+1)//2
-if sym_type == "oo": 
-    sym_ind = [0]
-    M_sym = qcf.M
-    bord_len = (c+1)//2+(r+1)//2-1
+qcf = qcfunc.QC(r,c,a)                      # create object
+qcf.CreateMap()                             # find which points lie inside stadium
+qcf.NumberPointsInQRTR()                    # count number of points that fall in bottome right quarter   
+qcf.plotMap()                               # plot the points inside stadium
+H = qcf.genMatrix()                         # generate full Hamiltonian, before symmetry considered
+N = int(qcf.n)                              # number of points in quarter
+qcf.CreateIndexArrays()                     # Fill arrays corresponding to I++,I+-,I-+,I--
+qcf.FillM()                                 # Fill lists with boundary conditions for centre lines      
+qcf.Symmetry(sym_type)                      # Depending on symmetry, choose which points to consider
 
 H_sym=[]
-
+sH = np.zeros((N,N)) 
 for I in range(0,N):
     for J in range(0,N):
-            for i in sym_ind:
-                for j in sym_ind:  
+            for i in qcf.sym_ind:
+                for j in qcf.sym_ind:  
                     sH[I,J] = sH[I,J]+H[qcf.Q_arr[i][I],qcf.Q_arr[j][J]] / qcf.deltaQRTR(i,I,j,J)
-                    if i == sym_ind[-1] and j == sym_ind[-1]:
-                        if (qcf.Q_arr[i][I] not in M_sym) and (qcf.Q_arr[j][J] not in M_sym): H_sym.append(sH[I,J])
+                    if i == qcf.sym_ind[-1] and j == qcf.sym_ind[-1]:
+                        if (qcf.Q_arr[i][I] not in qcf.M_sym) and (qcf.Q_arr[j][J] not in qcf.M_sym): H_sym.append(sH[I,J])
             
 
 
 if sym_type != "ee": 
-    shape = (N-bord_len,N-bord_len)                   
+    shape = (N-qcf.bord_len,N-qcf.bord_len)                   
     H_sym = np.reshape( H_sym, shape ) 
-
     sH=H_sym
 
-#print('sH = ')
-#print(sH)
-
 w, v = linalg.eig(sH)
-xt = np.linspace(0,qcf.x,c+2)
-yt = np.linspace(0,qcf.y,r+2)
-X, Y = np.meshgrid(xt, yt)
+X, Y = np.meshgrid(qcf.xt, qcf.yt)
 
 
 ################################# PLOTTING #################################
 repeatflag = "Y"
 while repeatflag == "Y":
-    s_state = 0#int(input("Plot which state? "))
+    s_state = 151#int(input("Plot which state? "))
     s_state_ind = sorted(enumerate(w), key=lambda x: x[1])[s_state][0]
     z = qcf.arrayFromZ(v[:,s_state_ind], sym_type)
     qcf.plot2Dpsi(X,Y,z,s_state,0)
-    qcf.plotContour(X,Y,z,s_state) 
+    qcf.plotContour(X,Y,z,s_state,r,c) 
     repeatflag = "n"#input("Enter Y to plot another energy level: ")
     
 n = len(w)
 nt = np.linspace(1,n,n)
 E = sorted(w/4)
-polyN = np.poly1d(np.polyfit(E, nt, 10))
+polyN = np.poly1d(np.polyfit(E, nt, 5))
 qcf.plotN(E, polyN,nt)
 
 # Limit plot to linear + interesting region
 top = int(3*n/8)
-bottom = int(n/5)
-diff = top-bottom+1
+bottom = int(n/4)
 print('Total number of points in stadium: {}'.format(n))
 print('Points taken in the range {} : {}'.format(bottom, top))
-nt = np.linspace(bottom,top,diff)
+nt = np.linspace(bottom,top,top-bottom+1)
 redE = E[bottom:(top+1)]
-redPolyN = np.poly1d(np.polyfit(redE, nt, 10))
+redPolyN = np.poly1d(np.polyfit(redE, nt, 5))
 qcf.plotN(redE, redPolyN,nt)
 qcf.plotPolyN(nt, redPolyN, redE)
 qcf.plotDelta(nt,redPolyN, redE, sym_type,r,c)
 
 # Delta-3 Statistic
-delta3 = qcf.delta3(redE, nt, diff, redPolyN)
+delta3 = qcf.delta3(redE, nt, redPolyN)
 qcf.plotDelta3(delta3) # should be x**1/2 shape, c.f. p.254 Reichl
