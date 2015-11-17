@@ -48,7 +48,7 @@ X, Y = np.meshgrid(qcf.xt, qcf.yt)
 ################################# PLOTTING #################################
 repeatflag = "Y"
 while repeatflag == "Y":
-    s_state = 151#int(input("Plot which state? "))
+    s_state = 201#int(input("Plot which state? "))
     s_state_ind = sorted(enumerate(w), key=lambda x: x[1])[s_state][0]
     z = qcf.arrayFromZ(v[:,s_state_ind], sym_type)
     qcf.plot2Dpsi(X,Y,z,s_state,0)
@@ -75,4 +75,6 @@ qcf.plotDelta(nt,redPolyN, redE, sym_type,r,c)
 
 # Delta-3 Statistic
 delta3 = qcf.delta3(redE, nt, redPolyN)
-qcf.plotDelta3(delta3) # should be x**1/2 shape, c.f. p.254 Reichl
+qcf.plotDelta3(delta3)
+
+return b, b_err
