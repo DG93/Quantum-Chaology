@@ -154,7 +154,7 @@ def plot2Dpsi(X,Y,z,ansatz):
     fig = plt.figure(figsize=(10,8))
     ax = fig.add_subplot(111, projection='3d')
     surf = ax.plot_surface(X,Y,z, cmap=cm.coolwarm, cstride=1, rstride=1)
-    ans = ax.plot_wireframe(X,Y,ansatz, cstride=1, rstride=1)
+    #ans = ax.plot_wireframe(X,Y,ansatz, cstride=1, rstride=1)
     fig.colorbar(surf)
     plt.xlabel('$x_i$',fontsize=20)
     plt.ylabel('$y_i$',fontsize=20)
