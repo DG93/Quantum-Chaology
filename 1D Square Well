@@ -6,9 +6,9 @@ from math import sqrt
 import oneDQCfunctions as qcf
 
         
-n =151#int(input("Enter an (odd) number of steps: "))
+n =500#int(input("Enter an (odd) number of steps: "))
 l = 1#float(input("Enter width of well: "))
-state = 1#int(input("Enter energy state (GS=1): "))
+state = 251#int(input("Enter energy state (GS=1): "))
 state = state-1
 a = l/n
 sigma_psi = a**2
@@ -50,7 +50,7 @@ qcf.plotEdiff(n,n,w,l,a)
 
 
 ##################### USING SYMMETRIES #####################
-
+"""
 oe = qcf.OE(state)
 N = int((n+1)/2)
 sH = qcf.redMatrix(H,N,oe)
@@ -77,3 +77,4 @@ qcf.plotEvN(n,N,sw/2,l,a)
 qcf.plotEdiff(n,N,sw/2,l,a)
 # Print energies
 qcf.printE(n,N,sw/2,l,a,s_state,sE)
+"""
