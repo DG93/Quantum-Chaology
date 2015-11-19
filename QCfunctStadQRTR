@@ -1,17 +1,12 @@
 # -*- coding: utf-8 -*-
-"""
-Created on Tue Oct 13 14:03:57 2015
-
-@author: mbyx9dl2
-"""
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import cm
 import scipy.integrate
 from mpl_toolkits.mplot3d import Axes3D
-from scipy.optimize import curve_fit
+from scipy.optimize import leastsq
 import scipy as sci
-
+from scipy.optimize import curve_fit
 
 class QC:
     def __init__(self,r,c,a):
@@ -60,21 +55,6 @@ class QC:
             elif(j>xr)and((j-xr)**2+(i-yr)**2<=R**2):
                 return 1
             else: return 0
-            
-#    def shape_outline(self, *j):
-#        xr = (self.c+1)-(self.r+1)/2
-#        yr = (self.r+1)/2
-#        xl = (self.r+1)/2
-#        yl = yr
-#        R = (self.r+1)/2-1
-#        if (j>=xl) and (j<=xr):
-#            return 0 # bottom line
-#        else:
-#            if(j<xl):
-#                return np.sqrt(R**2-(j-xl)**2)+yl
-#            elif(j>xr):
-#                return np.sqrt(R**2-(j-xr)**2)+yr
-#            else: return 0            
         
     def CreateMap(self):
         for i in range(1,self.r+1):
@@ -168,14 +148,43 @@ class QC:
             M.append(R)
         M = np.array(M)
         return M
-            
+                    
 
-#        
-#    def ij(I,c):
-#        i = (I-1)//c +1
-#        j = (I-1)%c +1
-#        return i,j
-#      
+    def genMatElement(self,J,I):
+        i = self.xmap
+        j = self.ymap
+        if I == 0:
+            if J == I:
+                R = 4
+            elif (i[J] == i[I]+1 and j[J] == j[I]):
+                R = -1
+            elif (i[J] == i[I] and j[J] == j[I]+1):
+                R = -1
+            else:
+                R = 0
+        elif I == (len(i)-1):
+            if J == I:
+                R = 4
+            elif (i[J] == i[I]-1 and j[J] == j[I]):
+                R = -1        
+            elif (i[J] == i[I] and j[J] == j[I]-1):
+                R = -1
+            else:
+                R = 0
+        else:
+            if J == I:
+                R = 4
+            elif (i[J] == i[I]+1 and j[J] == j[I]):
+                R = -1
+            elif (i[J] == i[I]-1 and j[J] == j[I]):
+                R = -1
+            elif (i[J] == i[I] and j[J] == j[I]+1):
+                R = -1
+            elif (i[J] == i[I] and j[J] == j[I]-1):
+                R = -1
+            else:
+                R = 0
+        return R
 
     def Symmetry(self, sym_type):
         if sym_type == "ee": 
@@ -194,8 +203,6 @@ class QC:
             self.M_sym = self.M
             self.bord_len = (self.c+1)//2+(self.r+1)//2-1
 
-        
-        
         
     def arrayFromZ(self, v, sym_type):
         Colsum = 0
@@ -260,7 +267,7 @@ class QC:
         Delta3=np.sum(varDelta3, axis=0)
         for j in range(0,len(Delta3)):
             Delta3[j] = Delta3[j] / (len(varDelta3))
-        return Delta3  
+        return Delta3 
             
     ################################# PLOTTING #################################
        
@@ -332,15 +339,24 @@ class QC:
         entries, bin_edges, patches = plt.hist(delta, bins=10,  histtype='bar', normed=True, label='Delta = n($E_{i+1}$) - n($E_{i}$)')
         x = 0.5*(bin_edges[1:] + bin_edges[:-1])
         y = entries
+        # hacky way of ignoring empty bins 
+        # Note: ROOT does this for least squares fits to histograms
+        xy=[]
+        xy.append(x)
+        xy.append(y)        
+        x = xy[0][xy[1]!=0]
+        y = xy[1][xy[1]!=0]
         def fitfunc(x, *p):
             return p[0]*(x**p[1])*np.exp(-(x**(p[1]+1))/p[2])
-
-        init  = [1, 0.5, 10]
+        init  = [1.5, 0.7, 1.3]
+        if string == 'Circle':init = [1.2,0,1.2]
         sigma_y = np.sqrt(y)  # Adding Poisson errors in y
         popt, pcov  = curve_fit(fitfunc, x, y, p0=init, sigma=sigma_y, absolute_sigma=False)
         c = popt
         c_err = np.sqrt(np.diag(pcov))
-        print('Fit Coefficients: {}, {}, {}'.format(c[0],c[1],c[2]))        
+        print('Fit Coefficients: {}, {}, {}'.format(c[0],c[1],c[2]))
+        x_hd = np.linspace(0,bin_edges[-1],100)
+        x=x_hd        
         plt.plot(x, fitfunc(x, *c), label='Fit: b = %1.3f \u00B1 %1.3f' %(c[1], c_err[1]) )
         dn=[]
         for i in range(0,len(nt)-1):
@@ -363,16 +379,17 @@ class QC:
         par_file = open(filename, 'a')
         par_file.write('%i\t%i\t%f\t%f\t%f\n' %(self.r,self.c,c[0],c[1],c[2]))
         par_file.close()
-        return c[1], c_err[1]
+        return c[1], c_err[1]        
+        
 
     def plotContour(self, X,Y,z,m,r,c):
         if r == c:
             string = 'Circle'
         else:
             string = 'Stadium'
-        fig = plt.figure(figsize=(15,12)) # figsize=(15,12) for circle, figsize=(25,10) for 2:1
+        fig = plt.figure(figsize=(25,10)) # figsize=(15,12) for circle, figsize=(25,10) for 2:1
         plt.contourf(X, Y, z, 100, cmap=cm.gist_rainbow)
-        plt.title('Contour plot for %ith energy' %m, fontsize=14)
+        plt.title('Contour plot for n=%i energy level' %m, fontsize=14)
         plt.xlabel('$x$',fontsize=20)
         plt.ylabel('$y$',fontsize=20)
         plt.colorbar()
