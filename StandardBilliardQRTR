@@ -10,15 +10,14 @@ from numpy import linalg
 import QCfunctStadQRTR as qcfunc
 
 # r and c MUST be odd numbers here
-r = 51
-c = 101
+r = 71
+c = 71
 a = 0.1
 sym_type="oo"
 qcf = qcfunc.QC(r,c,a)                      # create object
 qcf.CreateMap()                             # find which points lie inside stadium
 qcf.NumberPointsInQRTR()                    # count number of points that fall in bottome right quarter   
 qcf.plotMap()                               # plot the points inside stadium
-H = qcf.genMatrix()                         # generate full Hamiltonian, before symmetry considered
 N = int(qcf.n)                              # number of points in quarter
 qcf.CreateIndexArrays()                     # Fill arrays corresponding to I++,I+-,I-+,I--
 qcf.FillM()                                 # Fill lists with boundary conditions for centre lines      
@@ -30,16 +29,14 @@ for I in range(0,N):
     for J in range(0,N):
             for i in qcf.sym_ind:
                 for j in qcf.sym_ind:  
-                    sH[I,J] = sH[I,J]+H[qcf.Q_arr[i][I],qcf.Q_arr[j][J]] / qcf.deltaQRTR(i,I,j,J)
+                    sH[I,J] = sH[I,J]+qcf.genMatElement(qcf.Q_arr[i][I],qcf.Q_arr[j][J]) / qcf.deltaQRTR(i,I,j,J)
                     if i == qcf.sym_ind[-1] and j == qcf.sym_ind[-1]:
                         if (qcf.Q_arr[i][I] not in qcf.M_sym) and (qcf.Q_arr[j][J] not in qcf.M_sym): H_sym.append(sH[I,J])
-            
-
-
 if sym_type != "ee": 
     shape = (N-qcf.bord_len,N-qcf.bord_len)                   
     H_sym = np.reshape( H_sym, shape ) 
-    sH=H_sym
+    sH=H_sym   
+
 
 w, v = linalg.eig(sH)
 X, Y = np.meshgrid(qcf.xt, qcf.yt)
@@ -48,7 +45,7 @@ X, Y = np.meshgrid(qcf.xt, qcf.yt)
 ################################# PLOTTING #################################
 repeatflag = "Y"
 while repeatflag == "Y":
-    s_state = 201#int(input("Plot which state? "))
+    s_state = 151#int(input("Plot which state? "))
     s_state_ind = sorted(enumerate(w), key=lambda x: x[1])[s_state][0]
     z = qcf.arrayFromZ(v[:,s_state_ind], sym_type)
     qcf.plot2Dpsi(X,Y,z,s_state,0)
@@ -76,5 +73,3 @@ qcf.plotDelta(nt,redPolyN, redE, sym_type,r,c)
 # Delta-3 Statistic
 delta3 = qcf.delta3(redE, nt, redPolyN)
 qcf.plotDelta3(delta3)
-
-return b, b_err
