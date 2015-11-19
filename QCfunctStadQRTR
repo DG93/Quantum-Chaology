@@ -280,10 +280,11 @@ class QC:
     def plotN(self, E,polyN, nt):
         fig = plt.figure(figsize=(15,10))
         plt.plot(polyN(E), E, label='Polynomial fit')
-        plt.plot(nt, E, label='Numeric')
+        plt.plot(nt, E, label='Numerical Data')
         plt.title('n vs Energy', fontsize=30)
         plt.xlabel('n',fontsize=20)
         plt.ylabel('Energy',fontsize=20)
+        #plt.xlim(0, max(nt))
         plt.legend()
         plt.show()
         fig.savefig('Billiard_n_vs_E.png')
@@ -310,7 +311,7 @@ class QC:
             delta.append(abs(PolyN(E[i+1])-PolyN(E[i])))
             ntt.append(nt[i]-nt[0])
         fig = plt.figure(figsize=(15,10))
-        entries, bin_edges, patches = plt.hist(delta, bins=10,  histtype='bar', normed=True, label='Delta = n($E_{i+1}$) - n($E_{i}$)')
+        entries, bin_edges, patches = plt.hist(delta, bins=10, histtype='step', normed=True, label='Delta = n($E_{i+1}$) - n($E_{i}$)')
         x = 0.5*(bin_edges[1:] + bin_edges[:-1])
         y = entries
         # hacky way of ignoring empty bins 
@@ -339,13 +340,13 @@ class QC:
         print('Average nearest neighbour spacing, D: %f' %D)
         Ps = (1/D)*np.exp(-x/D)
         if string == 'Circle':
-            plt.plot(x, Ps, label='Poisson')
+            plt.plot(x, Ps, '--', label='Poisson')
         Pw = ((np.pi*x)/(2*D**2))*np.exp((-np.pi*x**2)/(4*D**2))
         if string == 'Stadium':
-            plt.plot(x, Pw, label='Wigner')
-        plt.title('Delta histogram: %s' % sym_type, fontsize=30)
+            plt.plot(x, Pw, '--', label='Wigner')
+        plt.title('Nearest Neighbour Spacing Histogram: %s' % sym_type, fontsize=30)
         plt.ylabel('Frequency',fontsize=20)
-        plt.xlabel('Delta',fontsize=20)
+        plt.xlabel('Nearest Neighbour Spacing, s',fontsize=20)
         plt.legend()
         plt.show()
         fig.savefig('Delta_plots/%s/%s_nbar_hist_%s_%s.png' %(sym_type, string, self.r, self.c))
@@ -373,9 +374,9 @@ class QC:
         plt.title('Contour plot for %ith energy' %m, fontsize=14)
         plt.xlabel('$x$',fontsize=20)
         plt.ylabel('$y$',fontsize=20)
-        fact=0.1
-        plt.xlim(-fact,self.x+fact)
-        plt.ylim(-fact,self.y+fact)
+        lim=0.1
+        plt.xlim(-lim,self.x+lim)
+        plt.ylim(-lim,self.y+lim)
         plt.colorbar()
         plt.show()
         fig.savefig('%s_%i_%i_Contour_%i.png' %(string,r,c,m))
