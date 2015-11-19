@@ -247,6 +247,8 @@ class QC:
         fig = plt.figure(figsize=(15,15))
         plt.plot(self.xmap, self.ymap, 'ro')
         plt.title('Points', fontsize=30)
+        plt.xlim(0,max(self.xmap)+1)
+        plt.ylim(0,max(self.ymap)+1)
         plt.xlabel('$x$',fontsize=20)
         plt.ylabel('$y$',fontsize=20)
         plt.show()
@@ -354,29 +356,29 @@ class QC:
         return c[1], c_err[1]        
         
 
-        def plotContour(self, X,Y,z,m,r,c):
-            if r == c:
-                string = 'Circle'
-            else:
-                string = 'Stadium'
-            fig = plt.figure(figsize=(15,12)) # figsize=(15,12) for circle, figsize=(25,10) for 2:1
-            plt.contourf(X, Y, z, 100, cmap=cm.gist_rainbow)
-            xtt = np.linspace(0,self.x+1,10000)
-            ytt=[]
-            ytt2=[]
-            for i in range(0,len(xtt)): ytt.append(self.shape_outline(xtt[i]))
-            for i in range(0,len(xtt)): ytt2.append(-1*ytt[i]+self.y)
-            plt.plot(xtt,ytt,'-k',linewidth=6)
-            plt.plot(xtt,ytt2,'-k',linewidth=6)
-            plt.title('Contour plot for %ith energy' %m, fontsize=14)
-            plt.xlabel('$x$',fontsize=20)
-            plt.ylabel('$y$',fontsize=20)
-            fact=0.1
-            plt.xlim(-fact,self.x+fact)
-            plt.ylim(-fact,self.y+fact)
-            plt.colorbar()
-            plt.show()
-            fig.savefig('%s_%i_%i_Contour_%i.png' %(string,r,c,m))
+    def plotContour(self, X,Y,z,m,r,c):
+        if r == c:
+            string = 'Circle'
+        else:
+            string = 'Stadium'
+        fig = plt.figure(figsize=(25,10)) # figsize=(15,12) for circle, figsize=(25,10) for 2:1
+        plt.contourf(X, Y, z, 100, cmap=cm.gist_rainbow)
+        xtt = np.linspace(0,self.x+1,10000)
+        ytt=[]
+        ytt2=[]
+        for i in range(0,len(xtt)): ytt.append(self.shape_outline(xtt[i]))
+        for i in range(0,len(xtt)): ytt2.append(-1*ytt[i]+self.y)
+        plt.plot(xtt,ytt,'-k',linewidth=6)
+        plt.plot(xtt,ytt2,'-k',linewidth=6)
+        plt.title('Contour plot for %ith energy' %m, fontsize=14)
+        plt.xlabel('$x$',fontsize=20)
+        plt.ylabel('$y$',fontsize=20)
+        fact=0.1
+        plt.xlim(-fact,self.x+fact)
+        plt.ylim(-fact,self.y+fact)
+        plt.colorbar()
+        plt.show()
+        fig.savefig('%s_%i_%i_Contour_%i.png' %(string,r,c,m))
         
     def plotDelta3(self, delta3):
         fig = plt.figure(figsize=(15,10))
