@@ -14,8 +14,8 @@ class QC:
         self.c = c
         self.a = a
         self.b=a
-        self.x = c*a#float(input("Enter width (x axis) of well: "))
-        self.y = r*a#float(input("Enter depth (y axis) of well: "))
+        self.x = (c-1)*a#float(input("Enter width (x axis) of well: "))
+        self.y = (r-1)*a#float(input("Enter depth (y axis) of well: "))
         self.xmap=[]
         self.ymap=[]
         self.C=[]
@@ -54,6 +54,21 @@ class QC:
                 return 1
             elif(j>xr)and((j-xr)**2+(i-yr)**2<=R**2):
                 return 1
+            else: return 0
+            
+    def shape_outline(self, x):
+        xr = self.a*((self.c-1)-(self.r-1)/2)
+        yr = self.a*(self.r-1)/2
+        xl = self.a*(self.r-1)/2
+        yl = yr
+        R = self.a*((self.r-1)/2)
+        if (x>=xl) and (x<=xr):
+            return 0 # bottom line
+        else:
+            if(x<xl):
+                return -np.sqrt(R**2-(x-xl)**2)+yl
+            elif(x>xr):
+                return -np.sqrt(R**2-(x-xr)**2)+yr
             else: return 0
         
     def CreateMap(self):
@@ -106,50 +121,7 @@ class QC:
                 self.M_hor.append( self.I((self.r-1)//2, J) )
                 self.M.append( self.I((self.r-1)//2, J) )
         self.M2.append( self.I((self.r-1)//2, (self.c-1)//2) )                
-                    
-    def genMatrix(self):
-        i = self.xmap
-        j = self.ymap
-        M = []
-        for marker in range(0,len(i)):
-            R=[None]*len(i)
-            for k in range(0, len(i)):
-                if marker == 0:
-                    if k == marker:
-                        R[k] = 4
-                    elif (i[k] == i[marker]+1 and j[k] == j[marker]):
-                        R[k] = -1
-                    elif (i[k] == i[marker] and j[k] == j[marker]+1):
-                        R[k] = -1
-                    else:
-                        R[k] = 0
-                elif marker == (len(i)-1):
-                    if k == marker:
-                        R[k] = 4
-                    elif (i[k] == i[marker]-1 and j[k] == j[marker]):
-                        R[k] = -1        
-                    elif (i[k] == i[marker] and j[k] == j[marker]-1):
-                        R[k] = -1
-                    else:
-                        R[k] = 0
-                else:
-                    if k == marker:
-                        R[k] = 4
-                    elif (i[k] == i[marker]+1 and j[k] == j[marker]):
-                        R[k] = -1
-                    elif (i[k] == i[marker]-1 and j[k] == j[marker]):
-                        R[k] = -1
-                    elif (i[k] == i[marker] and j[k] == j[marker]+1):
-                        R[k] = -1
-                    elif (i[k] == i[marker] and j[k] == j[marker]-1):
-                        R[k] = -1
-                    else:
-                        R[k] = 0
-            M.append(R)
-        M = np.array(M)
-        return M
-                    
-
+        
     def genMatElement(self,J,I):
         i = self.xmap
         j = self.ymap
@@ -382,19 +354,29 @@ class QC:
         return c[1], c_err[1]        
         
 
-    def plotContour(self, X,Y,z,m,r,c):
-        if r == c:
-            string = 'Circle'
-        else:
-            string = 'Stadium'
-        fig = plt.figure(figsize=(25,10)) # figsize=(15,12) for circle, figsize=(25,10) for 2:1
-        plt.contourf(X, Y, z, 100, cmap=cm.gist_rainbow)
-        plt.title('Contour plot for n=%i energy level' %m, fontsize=14)
-        plt.xlabel('$x$',fontsize=20)
-        plt.ylabel('$y$',fontsize=20)
-        plt.colorbar()
-        plt.show()
-        fig.savefig('%s_%i_%i_Contour_%i.png' %(string,r,c,m))
+        def plotContour(self, X,Y,z,m,r,c):
+            if r == c:
+                string = 'Circle'
+            else:
+                string = 'Stadium'
+            fig = plt.figure(figsize=(15,12)) # figsize=(15,12) for circle, figsize=(25,10) for 2:1
+            plt.contourf(X, Y, z, 100, cmap=cm.gist_rainbow)
+            xtt = np.linspace(0,self.x+1,10000)
+            ytt=[]
+            ytt2=[]
+            for i in range(0,len(xtt)): ytt.append(self.shape_outline(xtt[i]))
+            for i in range(0,len(xtt)): ytt2.append(-1*ytt[i]+self.y)
+            plt.plot(xtt,ytt,'-k',linewidth=6)
+            plt.plot(xtt,ytt2,'-k',linewidth=6)
+            plt.title('Contour plot for %ith energy' %m, fontsize=14)
+            plt.xlabel('$x$',fontsize=20)
+            plt.ylabel('$y$',fontsize=20)
+            fact=0.1
+            plt.xlim(-fact,self.x+fact)
+            plt.ylim(-fact,self.y+fact)
+            plt.colorbar()
+            plt.show()
+            fig.savefig('%s_%i_%i_Contour_%i.png' %(string,r,c,m))
         
     def plotDelta3(self, delta3):
         fig = plt.figure(figsize=(15,10))
