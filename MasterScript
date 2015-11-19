@@ -7,23 +7,55 @@ Created on Tue Nov 10 15:46:51 2015
 import matplotlib.pyplot as plt
 import numpy as np
 import QRTRstad as QS
-r = 101
-c = [101,151,201]#151,201,301]
+import scipy
+
+A = [1,2,3,4,5,8]#,10,15,20,30,40,50,100]
+N = 101*101
+r=[]
+c=[]
+# need some way of scaling so that computes same number of points for different
+# aspect ratios. Best way would be to expand distance between points (a!=b generalisation)
+for i in range(0,len(A)):
+    rt = int(np.sqrt(N/A[i]))
+    if rt%2 == 0: rt = rt+1
+    r.append(rt)
+    c.append(int((rt-1)*(A[i])+1))
+print(r)
+print(c)
 sym = ["oo"]#,"oe","eo","oo"]
 
 # directory must contain subdirectory '/Delta_plots', which contrains '/oo', '/oe' etc.
 
+b=[]
+b_err=[]
+asp_rat=[]
 for i in sym:
     filename = 'parameters_%s.txt' % i
     par_file = open(filename, 'w') #hacky way of clearing previous data, as .clear() isn't a thing. WHY?
     par_file.close()
     par_file = open(filename, 'a')    
     par_file.write('rows\tcols\tpar0\tpar1\tpar1\n')
-    for j in c:
-        QS.main(r,j,i)
+    for j in range(0,len(c)):
+        print('Doing %i of %i' %((j+1), len(c)))
+        bt, bte = QS.main(r[j],c[j],i)
+        b.append(bt)
+        b_err.append(bte)
+        asp_rat.append((c[j]-1)/(r[j]-1)) # as spacing in x and y the same
         
-# Two subplots, unpack the axes array immediately
-#f, (ax1, ax2) = plt.subplots(1, 2, sharey=True)
-#ax1.plot(x, y)
-#ax1.set_title('Sharing Y axis')
-#ax2.scatter(x, y) 
+                
+fig = plt.figure(figsize=(15,10))
+plt.errorbar(asp_rat, b, yerr = b_err, label='b', fmt='o')
+#b_fit = np.poly1d(np.polyfit(asp_rat, b, 10))
+#xt = np.linspace(1,asp_rat[-1],100)
+##plt.plot(xt, b_fit(xt), label = 'Fit')
+##max_asp_rat = scipy.optimize.fmin(lambda x: -1*b_fit(x), x0=1)
+#max_b = b_fit(max_asp_rat)
+#print(max_asp_rat, max_b)
+#plt.plot(max_asp_rat, max_b, 'r^', label = 'Max b')#; (%2.2f,%1.2f)' %(max_asp_rat,max_b))
+plt.title('scaling behaviour of b', fontsize=30)
+plt.xlabel('aspect ratio',fontsize=20)
+plt.xlim((asp_rat[0]-0.5,asp_rat[-1]*(1+0.2)))
+plt.ylabel('b',fontsize=20)
+plt.legend()
+plt.show()
+fig.savefig('scaling_b_%s.png' %sym)
