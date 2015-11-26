@@ -8,12 +8,14 @@ Created on Wed Sep 30 17:35:32 2015
 import numpy as np
 from numpy import linalg
 import QCfunctStadQRTR as qcfunc
+import time
 
 # r and c MUST be odd numbers here
-r = 71
-c = 71
+r = 101
+c = 201
 a = 0.1
 sym_type="oo"
+t0 = time.clock()
 qcf = qcfunc.QC(r,c,a)                      # create object
 qcf.CreateMap()                             # find which points lie inside stadium
 qcf.NumberPointsInQRTR()                    # count number of points that fall in bottome right quarter   
@@ -45,7 +47,7 @@ X, Y = np.meshgrid(qcf.xt, qcf.yt)
 ################################# PLOTTING #################################
 repeatflag = "Y"
 while repeatflag == "Y":
-    s_state = 151#int(input("Plot which state? "))
+    s_state = 171#int(input("Plot which state? "))
     s_state_ind = sorted(enumerate(w), key=lambda x: x[1])[s_state][0]
     z = qcf.arrayFromZ(v[:,s_state_ind], sym_type)
     qcf.plot2Dpsi(X,Y,z,s_state,0)
@@ -73,3 +75,5 @@ qcf.plotDelta(nt,redPolyN, redE, sym_type,r,c)
 # Delta-3 Statistic
 delta3 = qcf.delta3(redE, nt, redPolyN)
 qcf.plotDelta3(delta3)
+comp_time = (time.clock()-t0)/60.0
+print("TIME TO COMPUTE: %f mins" %comp_time)
