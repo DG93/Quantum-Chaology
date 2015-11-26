@@ -10,7 +10,7 @@ import QRTRstad2 as QS
 import time
 from numpy import sqrt
 
-s_state = 7
+s_state = 9
 r=41 
 c=[]
 ratio=[]
@@ -26,24 +26,28 @@ for i in range(0,len(c)):
     z, E = QS.main(r,c[i],s_state)
     wvfns.append(z)
     val.append(E)
-#print(val)
 
-max1=3
-Eval=[]
-Eval.append(val[0][max1])
-for j in range(1,len(c)):
-    dots=[]
-    for i in range(0,s_state):
-            dots.append(np.dot(wvfns[j-1][max1],wvfns[j][i]))
-    max1,max2 = max(enumerate(dots), key=lambda x: x[1])
-    print(max1,max2)
-    Eval.append(val[j][max1])
-print(dots)  
-print(ratio)  
-print(Eval)
-comp_time = (time.clock()-t0)/60.0
-print("TIME TO COMPUTE: %f mins" %comp_time )
 fig = plt.figure(figsize=(15,10))
-plt.plot(ratio, Eval)
-
-# time to do 2 ratios: 
+for max1 in range(0,s_state):
+#max1=3
+    Eval=[]
+    Eval.append(val[0][max1])
+    print('\n')
+    for j in range(1,len(c)):
+        dots=[]
+        for i in range(0,s_state):
+                dots.append(np.dot(wvfns[j-1][max1],wvfns[j][i]))
+        max1,max2 = max(enumerate(dots), key=lambda x: x[1])
+        print(max1,max2)
+        Eval.append(val[j][max1])
+        print(dots)  
+    #print(ratio)  
+    #print(Eval)
+    plt.plot(ratio, Eval, label='Level %i' %max1)
+    plt.title('Level Repulsion', fontsize=30)
+    plt.xlabel('Aspect Ratio',fontsize=20)
+    plt.ylabel('Energy',fontsize=20)
+    plt.legend()
+comp_time = (time.clock()-t0)/60.0
+print("TIME TO COMPUTE: %f mins" %comp_time)    
+plt.show()
