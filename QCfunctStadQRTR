@@ -79,8 +79,7 @@ class QC:
                     self.xmap.append(j)
                     self.ymap.append(i)
                     col_count = col_count +1
-            self.C.append(col_count)
-            
+            self.C.append(col_count)  
         for i in range(0,self.r):
             self.halfC.append((self.C[i]+1)//2)
     
@@ -113,7 +112,6 @@ class QC:
         return I
         
     def FillM(self):
-
         for I in range(0,self.r):
                 self.M_vert.append( self.I(I,self.halfC[I]-1) )
                 self.M.append( self.I(I,self.halfC[I]-1) )
@@ -204,14 +202,11 @@ class QC:
         for i in range(0,(self.r+1)//2):
             for j in range(0,self.halfC[(self.r-1)//2+i]): 
                 np.put(zero[(self.r-1)//2+(i+1)], [((self.c+1)//2+j)], z[i][j])
-        z=zero
-        z = z*z
+        z=zero*zero
         halfrad = int((self.r-1)/2)+2
-        z2 = z[-halfrad:self.r+2,-halfrad:self.c+2]
-        #print(z2)
-        z2 = np.ravel(z2)
-        #print(z2)
-        return z2
+        z = z[-halfrad:self.r+2,-halfrad:self.c+2]
+        z = np.ravel(z)
+        return z
     
     def arrayFromZ(self, v, sym_type):
         Colsum = 0
@@ -238,7 +233,6 @@ class QC:
             z.append(z_t.copy())    
             z_t.clear()
             Colsum = Colsum+halfC2[i]-hor_odd
-
         zero = np.zeros(((self.r+2), (self.c+2)))
         zero2 = np.zeros(((self.r+2), (self.c+2)))
         zero3 = np.zeros(((self.r+2), (self.c+2)))
@@ -266,9 +260,9 @@ class QC:
         a,b = np.polyfit(redE, nt, 1)
         varDelta3 = []
         l = len(redE)
-        for c in range(l//10, 9*l//10):
+        for c in range(4*l//10,6*l//10):#(l//10, 9*l//10):
             temp=[]
-            for L in range (1,l//10+1):
+            for L in range(1,4*l//10):#l//10+1):
                 r = redE[c-L:c+L]
                 t=((nt[c-L:c+L] - redPolyN(redE[c-L:c+L]))**2)
                 temp.append(scipy.integrate.simps(t, x=r)/L)
@@ -374,7 +368,7 @@ class QC:
             dn.append(PolyN(E[i+1])-PolyN(E[i]))
         D = np.mean(dn)
         print('Average nearest neighbour spacing, D: %f' %D)
-        
+        """
         def fitfunc2(x, *p):
             a = (sci.special.gamma(2+p[0])/(2+p[0]))**(1+p[0])
             A = a*(1+p[0])
@@ -390,7 +384,7 @@ class QC:
         x_hd = np.linspace(0,bin_edges[-1],100)
         x=x_hd        
         plt.plot(x, fitfunc(x, *c), label='1-Para Fit: b = %1.3f \u00B1 %1.3f' %(c2[0], c_err2[0]) )
-        
+        """
         Ps = (1/D)*np.exp(-x/D)
         if string == 'Circle':
             plt.plot(x, Ps, label='Poisson')
@@ -441,6 +435,7 @@ class QC:
         plt.title('Delta-3 vs L', fontsize=30)
         plt.xlabel('$interval, L$',fontsize=20)
         plt.ylabel('$Delta-3$',fontsize=20)
+        plt.xlim(0, max(L))
         plt.legend()
         plt.show()
         fig.savefig('Delta-3.png')
