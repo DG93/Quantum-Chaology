@@ -6,7 +6,7 @@ Created on Tue Nov 24 13:57:21 2015
 """
 import matplotlib.pyplot as plt
 import numpy as np
-import QRTRstad2 as QS
+import QRTRstad_level_rep as QS
 import time
 from itertools import product
 
