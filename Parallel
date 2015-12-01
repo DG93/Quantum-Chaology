@@ -1,0 +1,72 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Tue Nov 10 15:46:51 2015
+
+@author: mbyx9dl2
+"""
+#import matplotlib.pyplot as plt
+import numpy as np
+import time
+import multiprocessing as mp
+import QCworker as QCw
+
+if __name__ == '__main__':
+    
+    A = np.linspace(1,5,9)#,3,4,5,8,10,15,20,30,40,50,100]
+    print(A)
+    N = 141*141
+    r=[]
+    c=[]
+
+    # measure process time
+    t0 = time.clock()
+    for i in range(0,len(A)):
+        rt = int(np.sqrt(N/A[i]))
+        ct = int((rt-1)*(A[i])+1)
+        if rt%2 == 0: rt = rt+1
+        if ct%2 == 0: ct = ct+1
+        r.append(rt)
+        c.append(ct)
+    print(r)
+    print(c)
+    sym = ["oo"]#,"oe","eo","oo"]
+    jobs=[]
+    for i in sym:
+        filename = 'Delta_plots/%s/aspect_vs_b_data.txt' %i
+        open("filename","w").close()
+        for j in range(0,len(A)):
+            p = mp.Process(target=QCw.worker(r[j],c[j],i,))
+            jobs.append(p)
+            p.start()
+        for proc in jobs:
+            proc.join()
+        print(jobs)
+        comp_time = (time.clock()-t0)/60.0
+        print("TIME TO COMPUTE: %f mins" %comp_time ) 
+        
+
+        data = np.loadtxt(filename)                       # my file contains 3 columns of numbers
+        asp_rat, b, b_err = data[:,0], data[:,1], data[:,2] 
+        fig = plt.figure(figsize=(15,10))
+        plt.errorbar(asp_rat, b, yerr = b_err, label='b', fmt='o')
+        #b_fit = np.poly1d(np.polyfit(asp_rat, b, 10))
+        #xt = np.linspace(1,asp_rat[-1],100)
+        ##plt.plot(xt, b_fit(xt), label = 'Fit')
+        ##max_asp_rat = scipy.optimize.fmin(lambda x: -1*b_fit(x), x0=1)
+        #max_b = b_fit(max_asp_rat)
+        #print(max_asp_rat, max_b)
+        #plt.plot(max_asp_rat, max_b, 'r^', label = 'Max b')#; (%2.2f,%1.2f)' %(max_asp_rat,max_b))
+        plt.title('scaling behaviour of b', fontsize=30)
+        plt.xlabel('aspect ratio',fontsize=20)
+        plt.xlim((asp_rat[0]-0.5,asp_rat[-1]*(1+0.2)))
+        plt.ylabel('b',fontsize=20)
+        plt.legend()
+        plt.show()
+        fig.savefig('Delta_plots/%s/scaling_b.png' %i)
+        
+        par_file.close()
+        b_file.close()   
+
+    
+
+    
