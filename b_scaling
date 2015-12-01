@@ -6,7 +6,7 @@ Created on Tue Nov 10 15:46:51 2015
 """
 import matplotlib.pyplot as plt
 import numpy as np
-import QRTRstad as QS
+import QRTRstad_b_scaling as QS
 import time
 
 A = [1]#,2,3,4,5,8,10,15,20,30,40,50,100]
