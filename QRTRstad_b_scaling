@@ -14,6 +14,7 @@ def main(arg1,arg2,arg3):
     r = arg1
     c = arg2
     a = 0.1
+    s_state = 171
     sym_type=arg3#"oo"
     qcf = qcfunc.QC(r,c,a)                      # create object
     qcf.CreateMap()                             # find which points lie inside stadium
@@ -41,51 +42,21 @@ def main(arg1,arg2,arg3):
         shape = (N-qcf.bord_len,N-qcf.bord_len)                   
         H_sym = np.reshape( H_sym, shape ) 
         sH=H_sym
-    
-    #w, v = linalg.eig(sH)
-    # for speed just compute eigenvalues of Hermitian matrix (think only oo is Hermitian)
-    #w = linalg.eigvalsh(sH)
-    w = linalg.eigvals(sH)
-    X, Y = np.meshgrid(qcf.xt, qcf.yt)
-    
-    
-    ################################# PLOTTING #################################
-    repeatflag = "N"
-    while repeatflag != "N":
-        print("There are %i total correct solutions" %(len(w)//2) )
-        s_state = int(input("Plot which state? "))
-        s_state_ind = sorted(enumerate(w), key=lambda x: x[1])[s_state][0]
-        z = qcf.arrayFromZ(v[:,s_state_ind], sym_type)
-        qcf.plot2Dpsi(X,Y,z,s_state,0)
-        qcf.plotContour(X,Y,z,s_state,r,c) 
-        repeatflag = input("Enter N to NOT plot another energy level: ")
-    
+
+    lmbd = np.zeros((sH.shape))
+    i,j = np.indices((lmbd.shape))
+    lmbd[i==j] = s_state
+    sH2 = (sH-lmbd)**2
+    w, v = eigsh(sH2, k=s_state+1, which='SM')
     n = len(w)
     nt = np.linspace(1,n,n)
     E = sorted(w/4)
-    #polyN = np.poly1d(np.polyfit(E, nt, 5))
-    #qcf.plotN(E, polyN,nt)
     
     # Limit plot to linear + interesting region
     top = int(3*n/8)
     bottom = int(n/4)
-    #print('Total number of points in stadium: {}'.format(n))
-    #print('Points taken in the range {} : {}'.format(bottom, top))
     nt = np.linspace(bottom,top,top-bottom+1)
     redE = E[bottom:(top+1)]
     redPolyN = np.poly1d(np.polyfit(redE, nt, 5))
-    #qcf.plotN(redE, redPolyN,nt)
-    #qcf.plotPolyN(nt, redPolyN, redE)
     b, b_err = qcf.plotDelta(nt,redPolyN, redE, sym_type,r,c)
-
-    # Delta-3 Statistic
-    #delta3 = qcf.delta3(redE, nt, redPolyN)
-    #qcf.plotDelta3(delta3)
-    
-# tryna draw the shape like
-#    xtt = np.linspace(0,qcf.x,qcf.c+2)
-#    ytt = qcf.shape_outline(xtt)
-#    plt.plot(xtt,ytt)
-#    plt.show
-    
     return b, b_err
