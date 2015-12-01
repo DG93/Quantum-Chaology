@@ -1,0 +1,20 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Tue Nov 24 13:07:18 2015
+
+@author: mbyx9dl2
+"""
+import QRTRstad_b_scaling as QS
+
+# directory must contain subdirectory '/Delta_plots', which contrains '/oo', '/oe' etc.
+ 
+    
+def worker(r,c,sym):
+    print('HERE')
+    filename = 'Delta_plots/%s/aspect_vs_b_data.txt' %sym
+    b_file = open(filename, 'a')   
+    bt, bte = QS.main(r,c,sym)
+    asp_rat = (c-1)/(r-1)
+    b_file.write('%f\t%f\t%f\n' %(asp_rat,bt,bte))
+    b_file.close()
+    return
