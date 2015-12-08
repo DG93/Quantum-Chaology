@@ -118,7 +118,7 @@ class QC:
         for J in range(0,self.c):
                 self.M_hor.append( self.I((self.r-1)//2, J) )
                 self.M.append( self.I((self.r-1)//2, J) )
-        self.M2.append( self.I((self.r-1)//2, (self.c-1)//2) )                
+        self.M2.append( self.I((self.r-1)//2, (self.c-1)//2) )             
         
     def genMatElement(self,J,I):
         i = self.xmap
@@ -341,14 +341,14 @@ class QC:
             delta.append(abs(PolyN(E[i+1])-PolyN(E[i])))
             ntt.append(nt[i]-nt[0])
         fig = plt.figure(figsize=(15,10))
-        entries, bin_edges, patches = plt.hist(delta, bins=20,  histtype='bar', normed=True, label='Delta = n($E_{i+1}$) - n($E_{i}$)')
-        x = 0.5*(bin_edges[1:] + bin_edges[:-1])
+        entries, bin_edges, patches = plt.hist(delta, bins=20, align='left', histtype='step', normed=True, label='Delta = n($E_{i+1}$) - n($E_{i}$)')
+        x = (bin_edges[1:] + bin_edges[:-1])*0.5
         y = entries
         # hacky way of ignoring empty bins 
         # Note: ROOT does this for least squares fits to histograms
         xy=[]
         xy.append(x)
-        xy.append(y)        
+        xy.append(y)
         x = xy[0][xy[1]!=0]
         y = xy[1][xy[1]!=0]
         def fitfunc(x, *p):
@@ -367,33 +367,34 @@ class QC:
         for i in range(0,len(nt)-1):
             dn.append(PolyN(E[i+1])-PolyN(E[i]))
         D = np.mean(dn)
-        print('Average nearest neighbour spacing, D: %f' %D)
-        """
-        def fitfunc2(x, *p):
-            a = (sci.special.gamma(2+p[0])/(2+p[0]))**(1+p[0])
-            A = a*(1+p[0])
-            return A*((x/D)**p[0])*np.exp(-a*((x/D)**(1+p[0])))
-        init2  = [0.7]
-        if string == 'Circle':init2 = [0]
-        x = xy[0][xy[1]!=0]
-        y = xy[1][xy[1]!=0]
-        popt2, pcov2  = curve_fit(fitfunc2, x, y, p0=init2, sigma=sigma_y, absolute_sigma=False)
-        c2 = popt2
-        c_err2 = np.sqrt(np.diag(pcov2))
-        print('1-Para Fit Coefficient: {}'.format(c2[0]))
-        x_hd = np.linspace(0,bin_edges[-1],100)
-        x=x_hd        
-        plt.plot(x, fitfunc(x, *c), label='1-Para Fit: b = %1.3f \u00B1 %1.3f' %(c2[0], c_err2[0]) )
-        """
+        print('Average nearest neighbour spacing D: %f' %D)
+        
+#        def fitfunc2(x, *p):
+#            a = (sci.special.gamma(2+p[0])/(2+p[0]))**(1+p[0])
+#            A = a*(1+p[0])
+#            return A*((x/D)**p[0])*np.exp(-a*((x/D)**(1+p[0])))
+#        init2  = [0.7]
+#        if string == 'Circle':init2 = [0]
+#        x = xy[0][xy[1]!=0]
+#        y = xy[1][xy[1]!=0]
+#        popt2, pcov2  = curve_fit(fitfunc2, x, y, p0=init2, sigma=sigma_y, absolute_sigma=False)
+#        c2 = popt2
+#        c_err2 = np.sqrt(np.diag(pcov2))
+#        print('1-Para Fit Coefficient: {}'.format(c2[0]))
+#        x_hd = np.linspace(0,bin_edges[-1],100)
+#        x=x_hd        
+#        plt.plot(x, fitfunc2(x, *c2), label='1-Para Fit: b = %1.3f \u00B1 %1.3f' %(c2[0], c_err2[0]) )
+        
         Ps = (1/D)*np.exp(-x/D)
         if string == 'Circle':
-            plt.plot(x, Ps, label='Poisson')
+            plt.plot(x, Ps, 'r--', label='Poisson: b = 0')
         Pw = ((np.pi*x)/(2*D**2))*np.exp((-np.pi*x**2)/(4*D**2))
         if string == 'Stadium':
-            plt.plot(x, Pw, label='Wigner')
-        plt.title('Delta histogram: %s' % sym_type, fontsize=30)
+            plt.plot(x, Pw, 'r--', label='Wigner: b = 1')
+        plt.title('Nearest Neighbour Spacing Histogram: %s' % sym_type, fontsize=30)
         plt.ylabel('Frequency',fontsize=20)
         plt.xlabel('Delta',fontsize=20)
+        plt.xlim(0,max(delta))
         plt.legend()
         plt.show()
         fig.savefig('Delta_plots/%s/%s_nbar_hist_%s_%s.png' %(sym_type, string, self.r, self.c))
