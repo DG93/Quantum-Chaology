@@ -41,21 +41,19 @@ def main(arg1,arg2,arg3,arg4):
         shape = (N-qcf.bord_len,N-qcf.bord_len)                   
         H_sym = np.reshape( H_sym, shape ) 
         sH=H_sym
-    
+    print(len(sH))
     #w, v = linalg.eig(sH)
-    s_state_range = arg4
-    print(s_state_range)
+    s_state = arg4
     lmbd = np.zeros((sH.shape))
     l1,l2 = np.indices((lmbd.shape))
-    lmbd[l1==l2] = s_state_range
+    lmbd[l1==l2] = s_state
     sH2 = (sH-lmbd)**2
-    w, v = eigsh(sH2, k=s_state_range+1, which='SM')
-    
+    w, v = eigsh(sH2, k=s_state+1, which='SM')
     
     ################################# PLOTTING #################################
 
     z=[]
-    for i in range(0,s_state_range):
+    for i in range(0,s_state):
         z.append(qcf.QRTRarrayFromZ(v[:,sorted(enumerate(w), key=lambda x: x[1])[i][0]], sym_type))  
     E = sorted(w/4)
     n = len(w)
