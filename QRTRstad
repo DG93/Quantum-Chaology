@@ -1,0 +1,68 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Wed Sep 30 17:35:32 2015
+
+2D infinite potential wells
+@author: Dan Goldsmith & Dan Locke
+"""
+import numpy as np
+from numpy import linalg
+import QCfunctStadQRTR as qcfunc
+from scipy.sparse.linalg import eigsh
+
+def main(arg1,arg2,arg3,arg4):
+    # r and c MUST be odd numbers here
+    r = arg1
+    c = arg2
+    a = 0.1
+    sym_type=arg3
+    qcf = qcfunc.QC(r,c,a)                      # create object
+    qcf.CreateMap()                             # find which points lie inside stadium
+    qcf.NumberPointsInQRTR()                    # count number of points that fall in bottome right quarter   
+    qcf.plotMap()                               # plot the points inside stadium
+    N = int(qcf.n)                              # number of points in quarter
+    qcf.CreateIndexArrays()                     # Fill arrays corresponding to I++,I+-,I-+,I--
+    qcf.FillM()                                 # Fill lists with boundary conditions for centre lines      
+    qcf.Symmetry(sym_type)                      # Depending on symmetry, choose which points to consider
+    
+    H_sym=[]
+    sH = np.zeros((N,N)) 
+    for I in range(0,N):
+        for J in range(0,N):
+                for i in qcf.sym_ind:
+                    for j in qcf.sym_ind:  
+                        sH[I,J] = sH[I,J]+qcf.genMatElement(qcf.Q_arr[i][I],qcf.Q_arr[j][J]) / qcf.deltaQRTR(i,I,j,J)
+                        if i == qcf.sym_ind[-1] and j == qcf.sym_ind[-1]:
+                            if (qcf.Q_arr[i][I] not in qcf.M_sym) and (qcf.Q_arr[j][J] not in qcf.M_sym): H_sym.append(sH[I,J])
+                
+    
+    
+    if sym_type != "ee": 
+        shape = (N-qcf.bord_len,N-qcf.bord_len)                   
+        H_sym = np.reshape( H_sym, shape ) 
+        sH=H_sym
+    
+    #w, v = linalg.eig(sH)
+    s_state_range = arg4
+    print(s_state_range)
+    lmbd = np.zeros((sH.shape))
+    l1,l2 = np.indices((lmbd.shape))
+    lmbd[l1==l2] = s_state_range
+    sH2 = (sH-lmbd)**2
+    w, v = eigsh(sH2, k=s_state_range+1, which='SM')
+    
+    
+    ################################# PLOTTING #################################
+
+    z=[]
+    for i in range(0,s_state_range):
+        z.append(qcf.QRTRarrayFromZ(v[:,sorted(enumerate(w), key=lambda x: x[1])[i][0]], sym_type))  
+    E = sorted(w/4)
+    n = len(w)
+    top = int(3*n/8)
+    bottom = int(n/4)
+    nt = np.linspace(bottom,top,top-bottom+1)
+    redE = E[bottom:(top+1)]
+    redPolyN = np.poly1d(np.polyfit(redE, nt, 5))
+    b, b_err = qcf.plotDelta(nt,redPolyN, redE, sym_type,r,c)
+    return b, b_err, z, E
