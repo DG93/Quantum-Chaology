@@ -6,8 +6,8 @@ Created on Wed Sep 30 17:35:32 2015
 @author: Dan Goldsmith & Dan Locke
 """
 import numpy as np
-from numpy import linalg
-import QCfunctstadQRTR as qcfunc
+from numpy.linalg import eig
+import QCfunctStadQRTR as qcfunc
 import time
 from scipy.sparse.linalg import eigsh
 
@@ -15,7 +15,7 @@ from scipy.sparse.linalg import eigsh
 r = 51
 c = 101
 a = 0.1
-s_state = 171
+s_state = 400 # must be less than len(sH) !!!
 sym_type="oo"
 t0 = time.clock()
 qcf = qcfunc.QC(r,c,a)                      # create object
@@ -40,24 +40,26 @@ if sym_type != "ee":
     shape = (N-qcf.bord_len,N-qcf.bord_len)                   
     H_sym = np.reshape( H_sym, shape ) 
     sH=H_sym   
-
+print(len(sH))
 
 
 X, Y = np.meshgrid(qcf.xt, qcf.yt)
-#w, v = linalg.eig(sH)
+
+##### Generate all eigen-solutions #####
+#w, v = eig(sH)
+#s_state_ind = sorted(enumerate(w), key=lambda x: x[1])[s_state][0]
+#z = qcf.arrayFromZ(v[:,s_state_ind], sym_type)
+
+######## Krylov Subspace Method ########
 lmbd = np.zeros((sH.shape))
 i,j = np.indices((lmbd.shape))
 lmbd[i==j] = s_state
 sH2 = (sH-lmbd)**2
 w, v = eigsh(sH2, k=s_state+1, which='SM')
-
+z = qcf.arrayFromZ(v[:,s_state], sym_type)
 
 ################################# PLOTTING #################################
 
-#s_state_ind = sorted(enumerate(w), key=lambda x: x[1])[s_state][0]
-#z = qcf.arrayFromZ(v[:,s_state_ind], sym_type)
-
-z = qcf.arrayFromZ(v[:,s_state], sym_type)
 qcf.plot2Dpsi(X,Y,z,s_state,0)
 qcf.plotContour(X,Y,z,s_state,r,c) 
 
@@ -65,7 +67,7 @@ n = len(w)
 nt = np.linspace(1,n,n)
 E = sorted(w/4)
 polyN = np.poly1d(np.polyfit(E, nt, 5))
-qcf.plotN(E, polyN,nt)
+qcf.plotN(E,polyN,nt)
 
 # Limit plot to linear + interesting region
 top = int(3*n/8)
