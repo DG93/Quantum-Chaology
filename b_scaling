@@ -6,8 +6,9 @@ Created on Tue Nov 10 15:46:51 2015
 """
 import matplotlib.pyplot as plt
 import numpy as np
-import QRTRstad_b_scaling as QS
+import QRTRstad as QS
 import time
+from math import sqrt
 
 A = [1]#,2,3,4,5,8,10,15,20,30,40,50,100]
 N = 41*41
@@ -43,7 +44,7 @@ for i in sym:
     par_file.write('rows\tcols\tpar0\tpar1\tpar1\n')
     for j in range(0,len(c)):
         print('Doing %i of %i' %((j+1), len(c)))
-        bt, bte = QS.main(r[j],c[j],i)
+        bt, bte, temp, temp2 = QS.main(r[j],c[j],i,30)
         b.append(bt)
         b_err.append(bte)
         asp_rat.append((c[j]-1)/(r[j]-1)) # as spacing in x and y the same
@@ -64,10 +65,9 @@ for i in sym:
     plt.ylabel('b',fontsize=20)
     plt.legend()
     plt.show()
-    fig.savefig('Delta_plots/%s/scaling_b_%i_%i.png' %(i,int(sqrt(N)),max(A))
+    fig.savefig('Delta_plots/%s/scaling_b_%i_%i.png' %(i,int(sqrt(N)),max(A)))
     
 par_file.close()
 b_file.close()
 comp_time = (time.clock()-t0)/60.0
 print("TIME TO COMPUTE: %f mins" %comp_time )
-    
