@@ -10,8 +10,8 @@ import QRTRstad as QS
 import time
 from math import sqrt
 
-A = [1]#,2,3,4,5,8,10,15,20,30,40,50,100]
-N = 41*41
+A = [1,1.25,1.5,1.75,2,2.25,2.5,2.75,3,3.25,3.5,3.75,4,4.25,4.5,4.75,5]
+N = 71*71
 r=[]
 c=[]
 
@@ -25,6 +25,7 @@ for i in range(0,len(A)):
     if rt%2 == 0: rt = rt+1
     r.append(rt)
     c.append(int((rt-1)*(A[i])+1))
+    if c[i]%2 == 0: c[i] = c[i]+1
 print(r)
 print(c)
 sym = ["oo"]#,"oe","eo","oo"]
@@ -44,24 +45,24 @@ for i in sym:
     par_file.write('rows\tcols\tpar0\tpar1\tpar1\n')
     for j in range(0,len(c)):
         print('Doing %i of %i' %((j+1), len(c)))
-        bt, bte, temp, temp2 = QS.main(r[j],c[j],i,30)
+        bt, bte, temp, temp2 = QS.main(r[j],c[j],i,900)
         b.append(bt)
         b_err.append(bte)
         asp_rat.append((c[j]-1)/(r[j]-1)) # as spacing in x and y the same
         b_file.write('%f\t%f\t%f\n' %(asp_rat[j],b[j],b_err[j]))
-    #break            
+        
     fig = plt.figure(figsize=(15,10))
     plt.errorbar(asp_rat, b, yerr = b_err, label='b', fmt='o')
-    #b_fit = np.poly1d(np.polyfit(asp_rat, b, 10))
-    #xt = np.linspace(1,asp_rat[-1],100)
-    ##plt.plot(xt, b_fit(xt), label = 'Fit')
-    ##max_asp_rat = scipy.optimize.fmin(lambda x: -1*b_fit(x), x0=1)
+#    b_fit = np.poly1d(np.polyfit(asp_rat, b, 5))
+#    xt = np.linspace(1,asp_rat[-1],100)
+#    plt.plot(xt, b_fit(xt), label = 'Fit')
+    #max_asp_rat = scipy.optimize.fmin(lambda x: -1*b_fit(x), x0=1)
     #max_b = b_fit(max_asp_rat)
     #print(max_asp_rat, max_b)
     #plt.plot(max_asp_rat, max_b, 'r^', label = 'Max b')#; (%2.2f,%1.2f)' %(max_asp_rat,max_b))
-    plt.title('scaling behaviour of b', fontsize=30)
-    plt.xlabel('aspect ratio',fontsize=20)
-    plt.xlim((asp_rat[0]-0.5,asp_rat[-1]*(1+0.2)))
+    plt.title('Scaling Behaviour of Brody Parameter, b', fontsize=30)
+    plt.xlabel('Aspect ratio',fontsize=20)
+    plt.xlim((asp_rat[0]-0.5,asp_rat[-1]+0.5))
     plt.ylabel('b',fontsize=20)
     plt.legend()
     plt.show()
