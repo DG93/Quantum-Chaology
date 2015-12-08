@@ -12,10 +12,10 @@ import time
 from scipy.sparse.linalg import eigsh
 
 # r and c MUST be odd numbers here
-r = 51
+r = 101
 c = 101
 a = 0.1
-s_state = 400 # must be less than len(sH) !!!
+s_state = 7 # must be less than len(sH) !!!
 sym_type="oo"
 t0 = time.clock()
 qcf = qcfunc.QC(r,c,a)                      # create object
