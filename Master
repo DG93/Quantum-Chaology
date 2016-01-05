@@ -4,10 +4,10 @@ import MasterFuncts as fn
 
 no_aspects = 10
 aspect_offset = 40
-s_state= 10
+s_state= 5
 offset_state = 0 
 s_state_range = list(range(offset_state,offset_state+s_state))
-r_t=41
+r_t=71
 r,c,ratio, wvfns,val=[],[],[],[],[]
 sym=["oo"]
 for i in range(0,no_aspects):#r+1):
@@ -31,8 +31,8 @@ for i in range(0,len(ratio)):
     wvfns.append(wvfn_t)
 
 #tolerance = 0.00045 # higher tolerance -> more 'heuristicness' used
-print('Plotting level rep...') 
-fn.levelrep(wvfns, val, ratio, s_state_range)  
+#print('Plotting level rep...') 
+#fn.levelrep(wvfns, val, ratio, s_state_range)  
 
 filename_b = 'Delta_plots/%s/aspect_vs_b_data.txt' %sym[0]
 b_data = np.loadtxt(filename_b)                       # my file contains 3 columns of numbers
