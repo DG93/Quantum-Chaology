@@ -45,6 +45,7 @@ def genData(r, c, sym, s_state_range):
         filename = 'Delta_plots/%s/aspect_vs_b_data.txt' %i
         open(filename,"w").close()
         for j in range(0,len(c)):
+            print('Doing %i of %i' %(j,len(c)))
             p = mp.Process(target=worker(r[j],c[j],i,s_state_range))
             jobs.append(p)
             p.start()
@@ -59,7 +60,7 @@ def levelrep(wvfns, val, ratio, s_state_range):
     t0 = time.clock()
     
     s_state = len(s_state_range)
-    tolerance = 0.72*float(1/s_state)
+    tolerance = 0.72*float(1/s_state) # higher tolerance -> more 'heuristicness' used
 
     init_states = list(range(0, s_state))
     all_states=[]
@@ -213,7 +214,8 @@ def plot_b(asp_rat, b, b_err, sym):
         #plt.title('scaling behaviour of b', fontsize=30)
         plt.xlabel('Aspect Ratio',fontsize=40)
         plt.tick_params(axis='x', labelsize=20)
-        plt.xlim((asp_rat[0]-0.5,asp_rat[-1]*(1+0.2)))
+        plt.xlim((1.45,asp_rat[-1]*(1+0.03)))#(asp_rat[0]-0.03,asp_rat[-1]*(1+0.03)))
+        plt.ylim(0,max(b)+0.5)
         plt.ylabel('b',fontsize=40)
         plt.tick_params(axis='y', labelsize=20)
         plt.legend(prop={'size':20})
