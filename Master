@@ -1,0 +1,42 @@
+import numpy as np
+import MasterFuncts as fn
+
+
+no_aspects = 10
+aspect_offset = 40
+s_state= 10
+offset_state = 0 
+s_state_range = list(range(offset_state,offset_state+s_state))
+r_t=41
+r,c,ratio, wvfns,val=[],[],[],[],[]
+sym=["oo"]
+for i in range(0,no_aspects):#r+1):
+    r.append(r_t)
+    c.append(r_t+aspect_offset+i*2)
+    ratio.append((c[i]-1)/(r_t-1))
+
+redata = input("Re generate data? Enter Y: ")
+if redata == "Y":   
+    fn.genData(r, c, sym, s_state_range)
+
+for i in range(0,len(ratio)):
+    filename_E = 'Delta_plots/%s/E_%f.txt' %(sym[0],ratio[i])
+    E_data = np.loadtxt(filename_E)
+    val.append(E_data[:])
+    wvfn_t=[]
+    for state in s_state_range:
+        filename_z = 'Delta_plots/%s/z_data/z_%f_%i.txt' %(sym[0], ratio[i], state)
+        z_data = np.loadtxt(filename_z)
+        wvfn_t.append(z_data)
+    wvfns.append(wvfn_t)
+
+#tolerance = 0.00045 # higher tolerance -> more 'heuristicness' used
+print('Plotting level rep...') 
+fn.levelrep(wvfns, val, ratio, s_state_range)  
+
+filename_b = 'Delta_plots/%s/aspect_vs_b_data.txt' %sym[0]
+b_data = np.loadtxt(filename_b)                       # my file contains 3 columns of numbers
+asp_rat, b, b_err = b_data[:,0], b_data[:,1], b_data[:,2]
+ 
+fn.plot_b(ratio, b, b_err, sym[0])
+    
