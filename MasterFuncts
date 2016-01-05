@@ -1,0 +1,221 @@
+
+# -*- coding: utf-8 -*-
+"""
+Created on Tue Nov 24 13:57:21 2015
+
+@author: mbcx2dg2
+"""
+import matplotlib.pyplot as plt
+import numpy as np
+import time
+import multiprocessing as mp
+import QRTRstad as QS
+
+# directory must contain subdirectory '/Delta_plots', which contains '/oo', '/oe' etc. 
+    
+def worker(r,c,sym,s_state_range):
+    print("Next ratio started")
+    filename = 'Delta_plots/%s/aspect_vs_b_data.txt' %sym
+    b_file = open(filename, 'a')   
+    bt, bte, z, E = QS.main(r,c,sym, s_state_range)
+    asp_rat = (c-1)/(r-1)
+    b_file.write('%f\t%f\t%f\n' %(asp_rat,bt,bte))
+    b_file.close()
+    
+    filename_E = 'Delta_plots/%s/E_%f.txt' %(sym, asp_rat)
+    E_file = open(filename_E, 'w')
+    for item in E:
+        E_file.write("%f\n" % item)
+    E_file.close()
+    
+    for state in s_state_range:
+        filename_z = 'Delta_plots/%s/z_data/z_%f_%i.txt' %(sym, asp_rat, state)
+        z_file = open(filename_z, 'w')
+        for item in z[state-s_state_range[0]]:
+            z_file.write("%f\n" % item)
+        z_file.close()            
+    return
+    
+def genData(r, c, sym, s_state_range):
+    
+    t0 = time.clock()
+    
+    jobs=[]
+    for i in sym:
+        filename = 'Delta_plots/%s/aspect_vs_b_data.txt' %i
+        open(filename,"w").close()
+        for j in range(0,len(c)):
+            p = mp.Process(target=worker(r[j],c[j],i,s_state_range))
+            jobs.append(p)
+            p.start()
+        for proc in jobs:
+            proc.join()
+        print(jobs)
+        comp_time = (time.clock()-t0)/60.0
+        print("TIME TO GEN DATA: %f mins" %comp_time ) 
+
+def levelrep(wvfns, val, ratio, s_state_range):
+    # measure process time
+    t0 = time.clock()
+    
+    s_state = len(s_state_range)
+    tolerance = 0.72*float(1/s_state)
+
+    init_states = list(range(0, s_state))
+    all_states=[]
+    all_states.append(init_states)
+
+    
+    #s_state_range = list(range(offset_state,offset_state+s_state))
+    
+    
+    def multi_for(iterables):
+        if not iterables:
+            yield ()
+        else:
+            for item in iterables[0]:
+                for rest_tuple in multi_for(iterables[1:]):
+                    yield (item,) + rest_tuple
+    
+    def iterables(state_range):
+        ranges = [state_range]*len(state_range)
+        return list(map(list, ranges))
+    
+    
+    def anydup(thelist):
+      seen = set()
+      for x in thelist:
+        if x in seen: return True
+        seen.add(x)
+      return False
+        
+    def NextStates(ddots, state_range, init_states):
+        print('Heuristically comparing states')
+        flag=0
+        ddots=np.array(ddots)
+        P_tot=0
+        final_states = []
+        
+        for j in multi_for(iterables(state_range)):
+            if anydup(j) == False:
+                print(j)
+                k=0
+                for i in init_states:
+                    P_tot = P_tot+ddots[i][j[k]]
+                    k=k+1
+                if P_tot > flag:
+                    flag = P_tot
+                    final_states = j
+                P_tot=0
+        return final_states
+    
+    def normalize(lst):
+        s = sum(lst)
+        return list(map(lambda x: float(x)/s, lst))
+    
+    fig = plt.figure(figsize=(15,10))
+    init_states = list(range(0, s_state))
+    Eval=[]
+    Eval_t=[]
+    for i in init_states:
+            Eval_t.append(val[0][i])
+    Eval.append(Eval_t)
+    ddots=[]
+    Eval_t=[]
+    dots=[]
+    ddots=[]
+    excluded_states_i=[]
+    remaining_states_i=[]
+    excluded_states_f=[]
+    remaining_states_f=[]
+    #tolerence should be related to number of states being considered, if normalise overlap array
+    for j in range(1,len(ratio)):   # j is index of aspect_ratio
+        
+        for init_state in init_states:
+            for i in range(0,s_state):  # i labels possible final states
+                dots.append(np.dot(wvfns[j-1][init_state],wvfns[j][i]))
+            dots = normalize(dots)    
+            if sorted(dots)[-1]-sorted(dots)[-2] > tolerance:
+                excluded_states_i.append(init_state)
+                excluded_states_f.append(np.argmax(dots))
+            ddots.append(dots)
+
+            dots=[]
+        print('ddots:')
+        print(ddots)
+        remaining_states_i = [x for x in init_states if x not in excluded_states_i]
+        print("remaining states i: ")
+        print(remaining_states_i)
+        remaining_states_f = [x for x in init_states if x not in excluded_states_f]
+        print("remaining states f: ")
+        print(remaining_states_f)
+        if len(remaining_states_i) > 1 or len(remaining_states_f)>1:
+            fin_states_t = NextStates(ddots,remaining_states_f, remaining_states_i)
+        
+        fin_states=np.zeros(s_state)
+        k=0
+        for i in excluded_states_i:
+            fin_states[i] = int(excluded_states_f[k])
+            k=k+1
+        k=0
+        if len(remaining_states_i) > 1:
+            for i in remaining_states_i:
+                fin_states[i] = int(fin_states_t[k])
+                k=k+1
+            
+        fin_states = fin_states.astype(int)    
+        all_states.append(fin_states)
+        init_states = fin_states
+        
+        for i in fin_states:
+            Eval_t.append(val[j][i])
+    
+        Eval.append(Eval_t)
+        Eval_t=[]    
+        ddots=[]
+        excluded_states_i=[]
+        remaining_states_i=[]
+        excluded_states_f=[]
+        remaining_states_f=[]
+               
+    print(all_states)  
+                                                  
+    Eval_tt=[]
+    for i in range(0,s_state-1):
+        for j in range(0,len(ratio)):
+            Eval_tt.append(Eval[j][i])
+        print(ratio)
+        print(Eval_tt)
+        plt.plot(ratio, Eval_tt, label='Level %i' %(s_state_range[i]))
+        Eval_tt=[]
+        
+    plt.title('Level Repulsion', fontsize=30)
+    plt.xlabel('Aspect Ratio',fontsize=20)
+    plt.ylabel('Energy',fontsize=20)
+    plt.xlim(min(ratio),max(ratio))
+    plt.legend()                
+                    
+    comp_time = (time.clock()-t0)/60.0
+    print("TIME TO COMPUTE: %f mins" %comp_time)    
+    plt.show()
+    fig.savefig('Level_rep_%i_%1.2f.png' %(s_state, max(ratio)))
+
+def plot_b(asp_rat, b, b_err, sym):        
+        fig = plt.figure(figsize=(15,10))
+        plt.errorbar(asp_rat, b, yerr = b_err, label='b', fmt='o')
+        #b_fit = np.poly1d(np.polyfit(asp_rat, b, 10))
+        #xt = np.linspace(1,asp_rat[-1],100)
+        ##plt.plot(xt, b_fit(xt), label = 'Fit')
+        ##max_asp_rat = scipy.optimize.fmin(lambda x: -1*b_fit(x), x0=1)
+        #max_b = b_fit(max_asp_rat)
+        #print(max_asp_rat, max_b)
+        #plt.plot(max_asp_rat, max_b, 'r^', label = 'Max b')#; (%2.2f,%1.2f)' %(max_asp_rat,max_b))
+        #plt.title('scaling behaviour of b', fontsize=30)
+        plt.xlabel('Aspect Ratio',fontsize=40)
+        plt.tick_params(axis='x', labelsize=20)
+        plt.xlim((asp_rat[0]-0.5,asp_rat[-1]*(1+0.2)))
+        plt.ylabel('b',fontsize=40)
+        plt.tick_params(axis='y', labelsize=20)
+        plt.legend(prop={'size':20})
+        plt.show()
+        fig.savefig('Delta_plots/%s/scaling_b.png' %sym)
