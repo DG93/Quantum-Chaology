@@ -345,7 +345,7 @@ class QC:
             delta.append(abs(PolyN(E[i+1])-PolyN(E[i])))
             ntt.append(nt[i]-nt[0])
         fig = plt.figure(figsize=(15,10))
-        entries, bin_edges, patches = plt.hist(delta, bins=20, align='left', histtype='step', normed=True, label='Delta = n($E_{i+1}$) - n($E_{i}$)')
+        entries, bin_edges, patches = plt.hist(delta, bins=20, align='left', histtype='step', normed=True, label='s = n($E_{i+1}$) - n($E_{i}$)')
         x = (bin_edges[1:] + bin_edges[:-1])*0.5
         y = entries
         # hacky way of ignoring empty bins 
@@ -398,7 +398,7 @@ class QC:
         #plt.title('Nearest Neighbour Spacing Histogram: %s' % sym_type, fontsize=30)
         plt.ylabel('Frequency',fontsize=40)
         plt.tick_params(axis='y', labelsize=20)
-        plt.xlabel('Delta',fontsize=40)
+        plt.xlabel('s',fontsize=40)
         plt.tick_params(axis='x', labelsize=20)
         plt.xlim(0,max(delta))
         plt.legend(prop={'size':20})
