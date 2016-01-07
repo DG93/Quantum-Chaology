@@ -190,11 +190,13 @@ def levelrep(wvfns, val, ratio, s_state_range):
         plt.plot(ratio, Eval_tt, label='Level %i' %(s_state_range[i]))
         Eval_tt=[]
         
-    plt.title('Level Repulsion', fontsize=30)
-    plt.xlabel('Aspect Ratio',fontsize=20)
-    plt.ylabel('Energy',fontsize=20)
+    #plt.title('Level Repulsion', fontsize=30)
+    plt.xlabel('Aspect Ratio',fontsize=40)
+    plt.tick_params(axis='x', labelsize=20)
+    plt.ylabel('Energy',fontsize=40)
+    plt.tick_params(axis='y', labelsize=20)
     plt.xlim(min(ratio),max(ratio))
-    plt.legend()                
+    plt.legend(prop={'size':20})                
                     
     comp_time = (time.clock()-t0)/60.0
     print("TIME TO COMPUTE: %f mins" %comp_time)    
