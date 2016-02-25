@@ -8,77 +8,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import cm
 from mpl_toolkits.mplot3d import Axes3D
-
-def inside(i,j, c, r):
-    xr = (c+1)-(r+1)/2
-    yr = (r+1)/2
-    xl = (r+1)/2
-    yl = yr
-    R = (r+1)/2-1
     
-    if (j>=xl) and (j<=xr):
-        return 1
-    else:
-        if(j<xl)and((j-xl)**2+(i-yl)**2<=R**2):
-            return 1
-        elif(j>xr)and((j-xr)**2+(i-yr)**2<=R**2):
-            return 1
-        else: return 0
-        
-def genMatrix(i,j,a,b):
-    M = []
-    for marker in range(0,len(i)):
-        R=[None]*len(i)
-        for k in range(0, len(i)):
-            
-            if marker == 0:
-                if k == marker:
-                    R[k] = 2*((a**2)+(b**2))
-                elif (i[k] == i[marker]+1 and j[k] == j[marker]):
-                    R[k] = -b**2
-                elif (i[k] == i[marker] and j[k] == j[marker]+1):
-                    R[k] = -a**2
-                else:
-                    R[k] = 0
-                    
-            elif marker == (len(i)-1):
-                if k == marker:
-                    R[k] = 2*((a**2)+(b**2))
-                elif (i[k] == i[marker]-1 and j[k] == j[marker]):
-                    R[k] = -b**2        
-                elif (i[k] == i[marker] and j[k] == j[marker]-1):
-                    R[k] = -a**2
-                else:
-                    R[k] = 0
-                    
-            else:
-                if k == marker:
-                    R[k] = 2*((a**2)+(b**2))
-                elif (i[k] == i[marker]+1 and j[k] == j[marker]):
-                    R[k] = -b**2
-                elif (i[k] == i[marker]-1 and j[k] == j[marker]):
-                    R[k] = -b**2
-                elif (i[k] == i[marker] and j[k] == j[marker]+1):
-                    R[k] = -a**2
-                elif (i[k] == i[marker] and j[k] == j[marker]-1):
-                    R[k] = -a**2
-                else:
-                    R[k] = 0
-        M.append(R)
-    M = np.array(M)
-    return M
-        
-        
-def circle(x, r):
-    R = (r+1+1)/2
-    y = R+np.sqrt(R**2-(x-R)**2)
-    return -y
-    
-def I(i,j, C):
-    I=0
-    for k in range(0,i-1):
-        I = I + C[k]
-    I = I+j
+def I(i,j,c):
+    I = (i-1)*c+j
     return I
     
 def ij(I,c):
@@ -90,20 +22,16 @@ def createMatrix(x, y, c, r):
     a = x/c # spacing in x axis
     b = y/r # spacing in y axis
     n = r*c
-    
     H = np.zeros((n,n))
     i,j = np.indices(H.shape)
     H[i==j] = 2*((a**2)+(b**2))
     H[i==j-1] = -b**2
     H[i==j+1] = -b**2
-    
-    
     larger = max(r,c)
     smaller = min(r,c)
     if r == c:
         larger = r
         smaller = r
-    
     H[i==j+larger] = -a**2
     H[i==j-larger] = -a**2
     for k in range(1,smaller):
@@ -111,50 +39,73 @@ def createMatrix(x, y, c, r):
         if(ks)<=n:
             H[ks-1,ks] = 0
             H[ks,ks-1] = 0
-    return H;
-    #print(H)
+    return H
     
-def findStateNumber( state_x, state_y):
-    # currently doesn't return correct state at higher state indices
-    counter=0
-    if state_x > state_y:
-        counter = 1
-    
-    
-    big_step = max(a,b)
-    small_step = min(a,b)
-    deg_count = 0 
-    for i in range(1,n):
-        for j in range(1,n):
-            if ((i**2/a**2)+(j**2/b**2)) < ((state_x**2/a**2)+(state_y**2/b**2)):
-                s.append((i**2)+(j**2))
-                print(i,j)
-            if ((i**2/a**2)+(j**2/b**2)) == ((state_x**2/a**2)+(state_y**2/b**2)):
-                deg_count = deg_count+1
-    print('Number state in list = %i ' % len(s))
-    print('DEGENERACY COUNT: %i' %deg_count)
-    
-def arrayFromZ(v, c, r, C):
-    Colsum = 0
-    z=[None]*r
-    for i in range(0,r):
-        z[i] = (v[Colsum:Colsum+C[i]])
-        Colsum = Colsum+C[i]
-    #print(z)
-    z = np.array(z)
-    zero = np.zeros(((r+2), (c+2)))
-    for i in range(0,r):
-        for j in range(0,C[i]): 
-            np.put(zero[i+1], [(c+2-C[i])/2+j], z[i][j])
-    z = zero*zero
+def genMatrix(i,j):
+    M = []
+    for marker in range(0,len(i)):
+        R=[None]*len(i)
+        for k in range(0, len(i)):
+            if marker == 0:
+                if k == marker:
+                    R[k] = 4.
+                elif (i[k] == i[marker]+1 and j[k] == j[marker]):
+                    R[k] = -1
+                elif (i[k] == i[marker] and j[k] == j[marker]+1):
+                    R[k] = -1
+                else:
+                    R[k] = 0                    
+            elif marker == (len(i)-1):
+                if k == marker:
+                    R[k] = 4
+                elif (i[k] == i[marker]-1 and j[k] == j[marker]):
+                    R[k] = -1        
+                elif (i[k] == i[marker] and j[k] == j[marker]-1):
+                    R[k] = -1
+                else:
+                    R[k] = 0                    
+            else:
+                if k == marker:
+                    R[k] = 4
+                elif (i[k] == i[marker]+1 and j[k] == j[marker]):
+                    R[k] = -1
+                elif (i[k] == i[marker]-1 and j[k] == j[marker]):
+                    R[k] = -1
+                elif (i[k] == i[marker] and j[k] == j[marker]+1):
+                    R[k] = -1
+                elif (i[k] == i[marker] and j[k] == j[marker]-1):
+                    R[k] = -1
+                else:
+                    R[k] = 0
+        M.append(R)
+    M = np.array(M)
+    return M
+
+def arrayFromZ(v, c, r):
+    # Reshape the eigenvector
+    z = v.reshape((r,c))
+    # Add in boundary conditions
+    z = np.insert(z,0,0, axis=1)
+    z = np.insert(z,c+1,0, axis=1)
+    z = np.insert(z, 0,0,axis=0)
+    zero = np.zeros((1,c+2))
+    z = np.append(z,zero, axis=0 )
+    z = z*z
     return z
+    
+def plotMap(xmap,ymap):
+    fig = plt.figure(figsize=(15,15))
+    plt.plot(xmap, ymap, 'ro')
+    plt.title('Points', fontsize=30)
+    plt.xlabel('$x$',fontsize=20)
+    plt.ylabel('$y$',fontsize=20)
+    plt.show()
+    fig.savefig('Map.png')
 
-def plot2Dpsi(X,Y,z,ansatz):
-
+def plot2Dpsi(X,Y,z):
     fig = plt.figure(figsize=(10,8))
     ax = fig.add_subplot(111, projection='3d')
     surf = ax.plot_surface(X,Y,z, cmap=cm.coolwarm, cstride=1, rstride=1)
-    #ans = ax.plot_wireframe(X,Y,ansatz, cstride=1, rstride=1)
     fig.colorbar(surf)
     plt.xlabel('$x_i$',fontsize=20)
     plt.ylabel('$y_i$',fontsize=20)
@@ -163,10 +114,20 @@ def plot2Dpsi(X,Y,z,ansatz):
     plt.show()
     fig.savefig('2Dwell.png')
     
+def plotContour(X,Y,z, m):
+    fig = plt.figure(figsize=(15,15))
+    plt.contourf(X, Y, z, 100, cmap=cm.gist_rainbow)
+    plt.title('Contour plot for %ith energy' %(m), fontsize=14)
+    plt.xlabel('$x$',fontsize=20)
+    plt.ylabel('$y$',fontsize=20)
+    #plt.colorbar()
+    plt.show()
+    fig.savefig('Contour_%i.png' %(m))
+    
 def plotEnergies(nt, E, Et):
     fig2 = plt.figure(figsize=(15,10))
     plt.plot(nt, E, label='Numeric')
-    #plt.plot(nt,Et, label='Analytic')
+    plt.plot(nt,Et, label='Analytic')
     plt.title('Energy vs n', fontsize=30)
     plt.xlabel('$n$',fontsize=20)
     plt.ylabel('$Energy$',fontsize=20)
